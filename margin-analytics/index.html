@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BrightFunded &mdash; Margin Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f1f5f9;--surf:#fff;--surf2:#f8fafc;--border:#e2e8f0;--border2:#cbd5e1;
+  --txt:#0f172a;--txt2:#475569;--txt3:#94a3b8;
+  --blue:#2563eb;--blue-l:#dbeafe;--blue-m:#bfdbfe;
+  --green:#059669;--green-l:#d1fae5;
+  --amber:#d97706;--amber-l:#fef3c7;
+  --red:#dc2626;--red-l:#fee2e2;
+  --purple:#7c3aed;--purple-l:#ede9fe;
+  --teal:#0891b2;--teal-l:#cffafe;
+  --sh:0 1px 3px rgba(0,0,0,.08);--sh-md:0 4px 6px -1px rgba(0,0,0,.07);
+  --r:12px;--r-sm:8px;
+}
+html{font-size:14px;-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+
+/* HEADER */
+.hdr{background:var(--surf);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:200;box-shadow:var(--sh)}
+.hdr-brand{display:flex;align-items:center;gap:10px}
+.brand-ico{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-name{font-size:15px;font-weight:700;color:var(--txt)}
+.brand-sub{font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.6px;text-transform:uppercase}
+.hdr-right{display:flex;align-items:center;gap:16px}
+.fx-chip{display:flex;align-items:center;gap:6px;background:var(--surf2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px}
+.fx-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:blink 2s infinite}
+.fx-dot.loading{background:var(--amber)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+.fx-val{font-weight:700;color:var(--txt);font-size:12px}
+.fx-sep{color:var(--border2);margin:0 2px}
+.hdr-date{font-size:12px;color:var(--txt3)}
+
+/* MAIN */
+.main{max-width:1440px;margin:0 auto;padding:24px 28px 48px}
+
+/* COHORT SELECTOR BAR */
+.selector-bar{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:14px 20px;margin-bottom:20px;box-shadow:var(--sh);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.selector-label{font-size:12px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.cohort-select{font-family:inherit;font-size:13px;font-weight:600;padding:8px 32px 8px 14px;border:2px solid var(--blue-m);border-radius:8px;background:var(--blue-l);color:var(--blue);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232563eb' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.cohort-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.selector-hint{font-size:12px;color:var(--txt3)}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px 14px;box-shadow:var(--sh);position:relative;overflow:hidden;cursor:default}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.c-blue::after{background:var(--blue)}
+.kpi.c-amber::after{background:var(--amber)}
+.kpi.c-green::after{background:var(--green)}
+.kpi.c-purple::after{background:var(--purple)}
+.kpi.c-red::after{background:var(--red)}
+.kpi.c-slate::after{background:#64748b}
+.kpi.c-teal::after{background:var(--teal)}
+.kpi-label{font-size:10.5px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.kpi-val{font-size:22px;font-weight:800;color:var(--txt);line-height:1;margin-bottom:5px;font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:11px;color:var(--txt3);line-height:1.4}
+.kpi-sub b{color:var(--txt2);font-weight:600}
+
+/* TABS */
+.tabs-bar{display:flex;gap:2px;background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:5px;margin-bottom:22px;box-shadow:var(--sh);overflow-x:auto}
+.tab-btn{flex:1;min-width:max-content;padding:8px 16px;border:none;background:transparent;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:500;color:var(--txt2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab-btn:hover{color:var(--txt);background:var(--surf2)}
+.tab-btn.active{background:var(--blue);color:#fff;font-weight:600}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* CARDS */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;margin-bottom:18px}
+.card-hdr{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.card-title{font-size:14px;font-weight:700;color:var(--txt)}
+.card-sub{font-size:12px;color:var(--txt3);margin-top:2px;line-height:1.4}
+.card-body{padding:18px 20px}
+.chart-h260{position:relative;height:260px}
+.chart-h320{position:relative;height:320px}
+.chart-h380{position:relative;height:380px}
+.chart-h200{position:relative;height:200px}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.g64{display:grid;grid-template-columns:1.7fr 1fr;gap:18px}
+
+/* INFO BOX */
+.info-box{background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid var(--blue-m);border-radius:var(--r-sm);padding:16px 20px;margin-bottom:18px}
+.info-box-title{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.info-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.info-item{background:rgba(255,255,255,.8);border-radius:8px;padding:12px 14px;border:1px solid var(--border)}
+.info-item-title{font-size:12px;font-weight:700;color:var(--txt);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.info-item-body{font-size:11.5px;color:var(--txt2);line-height:1.5}
+.info-item-body em{font-style:normal;color:var(--blue);font-weight:600}
+.info-example{background:var(--surf2);border-radius:6px;padding:6px 8px;margin-top:6px;font-size:11px;color:var(--txt3);border-left:3px solid var(--border2)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;max-height:520px;overflow-y:auto}
+.tbl-wrap::-webkit-scrollbar{width:5px;height:5px}
+.tbl-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+table.dt{width:100%;border-collapse:collapse;font-size:12.5px}
+table.dt thead th{padding:9px 13px;text-align:right;font-size:10.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);background:var(--surf2);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:1}
+table.dt thead th:first-child{text-align:left}
+table.dt thead th:hover{color:var(--txt)}
+table.dt tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+table.dt tbody tr:hover{background:#f8fafc}
+table.dt tbody tr:last-child{border-bottom:none}
+table.dt td{padding:9px 13px;text-align:right;color:var(--txt);vertical-align:middle}
+table.dt td:first-child{text-align:left}
+.si{display:inline-block;margin-left:3px;opacity:.35;font-size:10px}
+.si.on{opacity:1;color:var(--blue)}
+
+/* PILLS & BADGES */
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700;text-align:center;min-width:62px}
+.pill-g{background:var(--green-l);color:#065f46}
+.pill-a{background:var(--amber-l);color:#78350f}
+.pill-r{background:var(--red-l);color:#7f1d1d}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700}
+.bdg-g{background:var(--green-l);color:#065f46}
+.bdg-b{background:var(--blue-l);color:#1e40af}
+.bdg-a{background:var(--amber-l);color:#78350f}
+.bdg-p{background:var(--purple-l);color:#4c1d95}
+
+/* STAT ROWS */
+.stat-r{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)}
+.stat-r:last-child{border-bottom:none}
+.stat-k{font-size:12px;color:var(--txt2)}
+.stat-v{font-size:13px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums}
+
+/* FILTERS */
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+select.fs,input.fs{font-family:inherit;font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surf);color:var(--txt);outline:none;cursor:pointer}
+select.fs:focus,input.fs:focus{border-color:var(--blue)}
+.btn{font-family:inherit;font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;transition:all .15s}
+.btn-p{background:var(--blue);color:#fff}.btn-p:hover{background:#1d4ed8}
+.btn-o{background:var(--surf);color:var(--txt2);border:1px solid var(--border2)}.btn-o:hover{background:var(--surf2)}
+
+/* PROJECTION BARS */
+.proj-row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:12px}
+.proj-month{width:64px;font-weight:700;color:var(--txt);flex-shrink:0}
+.proj-bar-wrap{flex:1;background:var(--surf2);border-radius:4px;height:22px;overflow:hidden;position:relative}
+.proj-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:#fff;transition:width .5s}
+.proj-val{width:90px;text-align:right;font-weight:700;color:var(--txt);flex-shrink:0}
+.proj-n{width:80px;text-align:right;font-size:11px;color:var(--txt3);flex-shrink:0}
+
+/* PAYOUT CURVE MILESTONES */
+.milestone-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.milestone{background:var(--surf2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;text-align:center}
+.milestone-val{font-size:18px;font-weight:800;color:var(--green);margin-bottom:2px}
+.milestone-label{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px}
+
+/* CALLOUT */
+.callout-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.callout{background:var(--surf2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;text-align:center}
+.callout-val{font-size:26px;font-weight:800;color:var(--blue);margin-bottom:3px}
+.callout-lbl{font-size:10.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+
+/* FX NOTE */
+.fx-note{background:var(--blue-l);border:1px solid var(--blue-m);border-radius:var(--r-sm);padding:9px 14px;font-size:12px;color:#1e40af;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+
+/* M-LABEL BADGE */
+.m-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;background:var(--blue-l);color:var(--blue)}
+
+/* OPEX CONTROL */
+.opex-ctrl{display:flex;align-items:center;gap:8px;background:var(--blue-l);border:1px solid var(--blue-m);border-radius:8px;padding:8px 14px;font-size:12px;color:#1e40af;margin-bottom:14px;flex-wrap:wrap}
+.opex-ctrl input{width:56px;font-family:inherit;font-size:13px;font-weight:700;padding:3px 6px;border:2px solid #93c5fd;border-radius:5px;background:#fff;color:#1e40af;text-align:center;outline:none}
+.opex-ctrl input:focus{border-color:var(--blue)}
+
+/* RESPONSIVE */
+@media(max-width:1200px){.kpi-strip{grid-template-columns:repeat(4,1fr)}.g2,.g3,.g64{grid-template-columns:1fr}.info-grid,.info-grid-4{grid-template-columns:1fr 1fr}.milestone-grid{grid-template-columns:repeat(2,1fr)}.callout-strip{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.kpi-strip{grid-template-columns:repeat(2,1fr)}.main{padding:12px 12px 40px}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="brand-ico">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+      </svg>
+    </div>
+    <div><div class="brand-name">BrightFunded</div><div class="brand-sub">Margin Analytics &mdash; All figures in USD</div></div>
+  </div>
+  <div class="hdr-right">
+    <div class="fx-chip">
+      <div class="fx-dot loading" id="fxDot"></div>
+      <span style="color:var(--txt3);font-size:11px">LIVE FX</span>
+      <span class="fx-sep">|</span>
+      <span style="color:var(--txt3);font-size:11px">EUR/USD</span>
+      <span class="fx-val" id="fxEU">1.0840</span>
+      <span id="fxSrc" style="color:var(--txt3);font-size:10px;margin-left:4px">(fallback)</span>
+    </div>
+    <div class="hdr-date">Data as of 2026-03-18</div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- FX NOTE -->
+  <div class="fx-note" id="fxNote">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="fxNoteText">Revenue converted to USD using daily historical EUR/USD FX rates per transaction date. Daily rates ensure accurate conversion across all cohorts.</span>
+  </div>
+
+  <!-- COHORT SELECTOR -->
+  <div class="selector-bar">
+    <span class="selector-label">&#128202; Viewing:</span>
+    <select class="cohort-select" id="cohortSelector" onchange="applyCohortFilter()">
+      <option value="all">All Cohorts (2023-12 &ndash; 2026-03)</option>
+    </select>
+    <span class="selector-hint" id="selectorHint">Showing portfolio-level totals &middot; Select a cohort month to drill down</span>
+  </div>
+
+  <!-- KPI STRIP (7 cards) -->
+  <div class="kpi-strip">
+    <div class="kpi c-blue">
+      <div class="kpi-label">&#128176; Revenue (USD)</div>
+      <div class="kpi-val" id="kRevenue">&mdash;</div>
+      <div class="kpi-sub" id="kRevenueSub">&mdash;</div>
+    </div>
+    <div class="kpi c-amber">
+      <div class="kpi-label">&#128228; Realized Payouts</div>
+      <div class="kpi-val" id="kPayouts">&mdash;</div>
+      <div class="kpi-sub" id="kPayoutsSub">&mdash;</div>
+    </div>
+    <div class="kpi c-green">
+      <div class="kpi-label">
+        Realized Margin
+        <span title="Revenue minus what&apos;s already been paid. Optimistic for young cohorts." style="cursor:help;color:var(--txt3)">&#9432;</span>
+      </div>
+      <div class="kpi-val" id="kRealM">&mdash;</div>
+      <div class="kpi-sub">Already-paid costs only</div>
+    </div>
+    <div class="kpi c-purple">
+      <div class="kpi-label">
+        Projected Margin
+        <span title="True estimated final margin including IBNR reserve." style="cursor:help;color:var(--txt3)">&#9432;</span>
+      </div>
+      <div class="kpi-val" id="kProjM">&mdash;</div>
+      <div class="kpi-sub">Incl. future payout reserve</div>
+    </div>
+    <div class="kpi c-red">
+      <div class="kpi-label">
+        IBNR Reserve
+        <span title="Estimated future payouts not yet paid." style="cursor:help;color:var(--txt3)">&#9432;</span>
+      </div>
+      <div class="kpi-val" id="kIBNR">&mdash;</div>
+      <div class="kpi-sub" id="kIBNRsub">Estimated future liability</div>
+    </div>
+    <div class="kpi c-teal">
+      <div class="kpi-label">
+        Net Profit Margin &#127974;
+        <span title="After payouts AND operating costs." style="cursor:help;color:var(--txt3)">&#9432;</span>
+      </div>
+      <div class="kpi-val" id="kNetM">&mdash;</div>
+      <div class="kpi-sub" id="kNetMsub">After payouts + 25% opex</div>
+    </div>
+    <div class="kpi c-slate">
+      <div class="kpi-label">&#128230; Orders</div>
+      <div class="kpi-val" id="kOrders">&mdash;</div>
+      <div class="kpi-sub" id="kOrdersSub">&mdash;</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-bar">
+    <button class="tab-btn active"  onclick="switchTab('overview',this)">&#128200; Overview</button>
+    <button class="tab-btn"         onclick="switchTab('cohorts',this)">&#128203; Cohort Analysis</button>
+    <button class="tab-btn"         onclick="switchTab('projections',this)">&#128302; Future Projections</button>
+    <button class="tab-btn"         onclick="switchTab('curve',this)">&#128201; Payout Curve</button>
+    <button class="tab-btn"         onclick="switchTab('geo',this)">&#127758; Geography</button>
+    <button class="tab-btn"         onclick="switchTab('sizes',this)">&#128208; Account Sizes</button>
+    <button class="tab-btn"         onclick="switchTab('attr',this)">&#128279; Attribution</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: OVERVIEW -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-overview" class="tab-panel active">
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr">
+          <div><div class="card-title">Monthly Revenue (USD)</div><div class="card-sub">Net revenue per cohort month &middot; converted at daily historical EUR/USD rate</div></div>
+        </div>
+        <div class="card-body"><div class="chart-h260"><canvas id="chRevenue"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <div><div class="card-title">Monthly Payouts Paid Out (USD)</div><div class="card-sub">Actual payout outflows by calendar month (USD + EUR + GBP &rarr; USD)</div></div>
+        </div>
+        <div class="card-body"><div class="chart-h260"><canvas id="chPayouts"></canvas></div></div>
+      </div>
+    </div>
+    <div class="g64">
+      <div class="card">
+        <div class="card-hdr">
+          <div><div class="card-title">Revenue vs. Realized Payouts by Cohort (USD)</div><div class="card-sub">Bar = revenue &middot; Red line = what&apos;s already been paid to traders</div></div>
+        </div>
+        <div class="card-body"><div class="chart-h320"><canvas id="chOverview"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Portfolio Summary</div></div>
+        <div class="card-body" id="summaryPanel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: COHORT ANALYSIS -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-cohorts" class="tab-panel">
+    <!-- EXPLAINER -->
+    <div class="info-box">
+      <div class="info-box-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        How to Read This Table &mdash; Margins, Op Cost &amp; Maturity explained
+      </div>
+      <div class="info-grid-4">
+        <div class="info-item">
+          <div class="info-item-title" style="color:var(--green)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Realized Margin
+          </div>
+          <div class="info-item-body">
+            <em>(Revenue &ndash; Already Paid) &divide; Revenue</em><br><br>
+            &ldquo;If payouts stopped today, what&apos;s left?&rdquo; Good for mature cohorts, <strong>misleading for young ones</strong> because they haven&apos;t paid most traders yet.
+            <div class="info-example">&#128204; Example: A 2026 cohort shows 90%+ realized margin but it&apos;s only ~10% mature. Most payouts haven&apos;t happened yet.</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-item-title" style="color:var(--purple)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Projected Margin &#9733; Most Important
+          </div>
+          <div class="info-item-body">
+            <em>(Revenue &ndash; Paid &ndash; IBNR) &divide; Revenue</em><br><br>
+            The <strong>true estimated final gross margin</strong> once all traders have been paid. Uses the historical payout curve to estimate future costs.
+            <div class="info-example">&#128204; Target: keep above 20%. Below 10% = alarm. Negative = losing money on that cohort.</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-item-title" style="color:var(--teal)">
+            &#127974; Net Profit Margin
+          </div>
+          <div class="info-item-body">
+            <em>(Revenue &ndash; Projected Cost &ndash; OpEx) &divide; Revenue</em><br><br>
+            Bottom-line profit after all trader payouts <strong>and</strong> operating costs. Adjust the OpEx % control to model different cost scenarios.
+            <div class="info-example">&#128204; Default: 25% OpEx. Net Margin = Projected Margin minus OpEx assumption.</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="info-item-title" style="color:var(--amber)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Maturity
+          </div>
+          <div class="info-item-body">
+            <em>% of expected lifetime payouts already made</em><br><br>
+            Shows how reliable the Projected Margin estimate is:<br>
+            <strong style="color:var(--green)">70%+ Mature</strong> &rarr; very reliable<br>
+            <strong style="color:var(--blue)">40&ndash;70% Maturing</strong> &rarr; moderate<br>
+            <strong style="color:var(--amber)">&lt;40% Young/New</strong> &rarr; many ahead
+            <div class="info-example">&#128204; 63.15% = lifetime payout rate. A &ldquo;Mature&rdquo; cohort has paid everything the curve predicts.</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;">
+        <a href="https://www.notion.so/brightfunded/IBNR-3279a0ea89bc8044987accb70ad23903?source=copy_link" target="_blank" style="color:var(--teal);font-weight:600;text-decoration:underline;">&#9881; IBNR explanation</a>
+      </div>
+    </div>
+
+    <!-- OPEX CONTROL -->
+    <div class="opex-ctrl">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      <span style="font-weight:600">Fixed Operational Cost</span>
+      <input type="number" id="opexInput" value="25" min="0" max="100" step="1" oninput="updateOpEx(this.value)">
+      <span>% of Revenue / month &mdash; adjusts Op Cost &amp; Net Profit Margin live</span>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div><div class="card-title">Cohort Margin Table</div><div class="card-sub">Revenue at daily historical EUR/USD rate &middot; IBNR estimated from payout curve &middot; Daily FX per transaction</div></div>
+        <div class="filters">
+          <select class="fs" id="cohortTblFilter" onchange="renderCohortTbl()">
+            <option value="all">All cohorts</option>
+            <option value="mature">Mature (&ge;70%)</option>
+            <option value="y2025">2025+</option>
+            <option value="y2026">2026</option>
+          </select>
+          <button class="btn btn-o" onclick="exportCSV()" style="font-size:11px;padding:5px 10px">&darr; CSV</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="dt" id="cohortTbl">
+          <thead>
+            <tr>
+              <th style="text-align:left" onclick="sortTbl('cohort_ym')">Month<span class="si" id="si_cohort_ym">&updownarrow;</span></th>
+              <th onclick="sortTbl('age_months')">Age<span class="si" id="si_age_months">&updownarrow;</span></th>
+              <th onclick="sortTbl('n_orders')">Orders<span class="si" id="si_n_orders">&updownarrow;</span></th>
+              <th onclick="sortTbl('revenue_usd_net')">Revenue<span class="si" id="si_revenue_usd_net">&updownarrow;</span></th>
+              <th onclick="sortTbl('payouts_usd')">Paid Out<span class="si" id="si_payouts_usd">&updownarrow;</span></th>
+              <th onclick="sortTbl('ibnr_usd')">IBNR Est.<span class="si" id="si_ibnr_usd">&updownarrow;</span></th>
+              <th onclick="sortTbl('projected_cost_usd')">Total Proj. Cost<span class="si" id="si_projected_cost_usd">&updownarrow;</span></th>
+              <th onclick="sortTbl('realized_margin_pct')">Realized Margin<span class="si" id="si_realized_margin_pct">&updownarrow;</span></th>
+              <th onclick="sortTbl('projected_margin_pct')">Projected Margin &#9733;<span class="si" id="si_projected_margin_pct">&updownarrow;</span></th>
+              <th onclick="sortTbl('_opex_pct')">Op Cost (<span id="opexPctHeader">25.0</span>%)<span class="si" id="si__opex_pct">&updownarrow;</span></th>
+              <th onclick="sortTbl('_net_margin')">Net Profit Margin &#127974;<span class="si" id="si__net_margin">&updownarrow;</span></th>
+              <th onclick="sortTbl('maturity_pct')">Maturity<span class="si" id="si_maturity_pct">&updownarrow;</span></th>
+            </tr>
+          </thead>
+          <tbody id="cohortTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- REMAINING PAYOUT SCHEDULE per cohort (M+next to M+24) -->
+    <div id="remainingSchedCard" class="card" style="display:none;margin-top:4px">
+      <div class="card-hdr">
+        <div>
+          <div class="card-title" id="remainingSchedTitle">Expected Remaining Payout Schedule</div>
+          <div class="card-sub" id="remainingSchedSub">Historical payout curve applied to remaining months</div>
+        </div>
+        <div style="background:var(--teal);color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;white-space:nowrap">Tail-Development IBNR</div>
+      </div>
+      <div class="card-body">
+        <div id="remainingSchedStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"></div>
+        <div class="chart-h260"><canvas id="chRemainingSchedule"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: FUTURE PROJECTIONS -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-projections" class="tab-panel">
+    <div class="info-box" style="background:linear-gradient(135deg,#fdf4ff,#eff6ff);border-color:#d8b4fe">
+      <div class="info-box-title" style="color:var(--purple)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        How Future Projections Work &mdash; What are M+0, M+1, M+2?
+      </div>
+      <div class="info-grid">
+        <div class="info-item" style="border-color:#d8b4fe">
+          <div class="info-item-title" style="color:var(--purple)">What is M+1, M+2, M+3?</div>
+          <div class="info-item-body">
+            When you sell a challenge, that month = <span class="m-tag">M+0</span>. Then:<br>
+            <span class="m-tag">M+1</span> = 1 month after sale<br>
+            <span class="m-tag">M+2</span> = 2 months after sale<br>
+            <span class="m-tag">M+3</span> = 3 months after sale<br>
+            ...up to <span class="m-tag">M+24</span> (2 years)<br><br>
+            The payout curve tells us what % of a cohort&apos;s total lifetime payouts happen at each M.
+            <div class="info-example">Example: M+1 = 19.6% of revenue. M+2 = 17.1%. First 3 months = 48.7% of all lifetime payouts.</div>
+          </div>
+        </div>
+        <div class="info-item" style="border-color:#d8b4fe">
+          <div class="info-item-title" style="color:var(--purple)">How to read the projection chart</div>
+          <div class="info-item-body">
+            In each future calendar month, multiple cohorts are all at different M-offsets simultaneously:<br><br>
+            For each cohort C in future month F:<br>
+            lag = F &minus; C.month<br>
+            contribution = C.revenue &times; curve[lag]<br><br>
+            Sum all cohorts = total expected payout for that month.
+            <div class="info-example">This is purely from existing cohorts. New sales are not included.</div>
+          </div>
+        </div>
+        <div class="info-item" style="border-color:#d8b4fe">
+          <div class="info-item-title" style="color:var(--purple)">Why does it drop fast?</div>
+          <div class="info-item-body">
+            Most payouts happen early (M+1 = 19.6%, M+2 = 17.1%). By M+4 you&apos;re already down to 4.3%.<br><br>
+            So as time passes, existing cohorts &ldquo;age out&rdquo; of their peak payout months and the tail becomes small.<br><br>
+            The big driver is recent, large cohorts. When they age past M+3, obligations drop sharply.
+            <div class="info-example">By M+3 you&apos;ve paid ~48.7% of ALL lifetime payouts for a cohort.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g64">
+      <div class="card">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">&#128302; Expected Payout Outflows &mdash; Next 30 Months</div>
+            <div class="card-sub">From existing cohorts only (2023-12 &ndash; 2026-03) &middot; Does not include future new sales</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart-h320"><canvas id="chFuture"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div>
+          <div class="card-title">Cumulative Future Liability</div>
+          <div class="card-sub">Running total of remaining IBNR to be paid</div>
+        </div></div>
+        <div class="card-body">
+          <div class="stat-r"><span class="stat-k">Next 3 months</span><span class="stat-v" id="futNext3">&mdash;</span></div>
+          <div class="stat-r"><span class="stat-k">Next 6 months</span><span class="stat-v" id="futNext6">&mdash;</span></div>
+          <div class="stat-r"><span class="stat-k">Next 12 months</span><span class="stat-v" id="futNext12">&mdash;</span></div>
+          <div class="stat-r"><span class="stat-k">Total remaining (30 months)</span><span class="stat-v" id="futTotal">&mdash;</span></div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+          <div class="stat-r"><span class="stat-k" style="font-weight:600">Largest month</span><span class="stat-v" id="futLargest" style="color:var(--red)">&mdash;</span></div>
+          <div class="stat-r"><span class="stat-k">Month with most cohorts contributing</span><span class="stat-v" id="futMostCohorts">&mdash;</span></div>
+          <div class="stat-r"><span class="stat-k">Total IBNR in data</span><span class="stat-v" id="futIBNRTotal">&mdash;</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Month-by-Month Projection Table</div>
+        <div class="card-sub">Expected payout obligations from existing cohorts by future calendar month</div>
+      </div>
+      <div class="card-body">
+        <div id="projBars"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: PAYOUT CURVE -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-curve" class="tab-panel">
+    <div class="callout-strip">
+      <div class="callout"><div class="callout-val" id="calloutExpPay">&mdash;</div><div class="callout-lbl">Expected lifetime payout rate</div></div>
+      <div class="callout"><div class="callout-val" id="calloutExpMargin">&mdash;</div><div class="callout-lbl">Expected gross margin</div></div>
+      <div class="callout"><div class="callout-val" id="calloutPeakM">&mdash;</div><div class="callout-lbl" id="calloutPeakMlbl">Peak payout month</div></div>
+    </div>
+    <div class="info-box" style="margin-bottom:18px">
+      <div class="info-box-title">&#128201; How to read the Payout Curve</div>
+      <div class="info-item-body" style="font-size:12.5px;color:var(--txt2)">
+        The payout curve was built from <strong>mature cohorts (2023-12 onwards)</strong>. It shows: for every $100 of revenue collected in month 0, how much do you expect to pay traders at each future month?<br><br>
+        <strong>Monthly chart (bars)</strong>: shows the % paid in EACH individual month. M+1 is the biggest (19.6%) &mdash; traders who pass their phase in month 1 get funded and start getting paid.<br>
+        <strong>Cumulative chart (line)</strong>: shows the running total. By M+3 you&apos;ve already paid ~48.7% of lifetime total. By M+12 you&apos;ve paid ~62.1%. Full 24-month run = 63.15%.<br><br>
+        &#128273; <strong>Key insight</strong>: The first 3 months after sale = 48.7% of ALL future payouts. Your most recent cohort&apos;s sales will produce most of their cost in the next 3 months.
+      </div>
+    </div>
+    <div class="milestone-grid">
+      <div class="milestone"><div class="milestone-val" id="ms0">&mdash;</div><div class="milestone-label">M+0 (sale month)</div></div>
+      <div class="milestone"><div class="milestone-val" id="ms1">&mdash;</div><div class="milestone-label">M+1 cumulative</div></div>
+      <div class="milestone"><div class="milestone-val" id="ms2">&mdash;</div><div class="milestone-label">M+2 cumulative</div></div>
+      <div class="milestone"><div class="milestone-val" id="ms3">&mdash;</div><div class="milestone-label">M+3 cumulative</div></div>
+      <div class="milestone"><div class="milestone-val" id="ms5">&mdash;</div><div class="milestone-label">M+5 cumulative</div></div>
+      <div class="milestone"><div class="milestone-val" id="ms11">&mdash;</div><div class="milestone-label">M+11 cumulative</div></div>
+      <div class="milestone"><div class="milestone-val" id="ms17">&mdash;</div><div class="milestone-label">M+17 cumulative</div></div>
+      <div class="milestone"><div class="milestone-val" id="ms24">&mdash;</div><div class="milestone-label">M+24 (lifetime total)</div></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div><div class="card-title">Monthly Payout Rate by M-offset</div><div class="card-sub">% of total lifetime revenue paid in each individual month after sale</div></div></div>
+        <div class="card-body"><div class="chart-h320"><canvas id="chCurveM"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div><div class="card-title">Cumulative Payout Curve</div><div class="card-sub">Running total % of revenue paid by month M</div></div></div>
+        <div class="card-body"><div class="chart-h320"><canvas id="chCurveC"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: GEOGRAPHY -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-geo" class="tab-panel">
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div><div class="card-title">Revenue by Country &mdash; Top 20 (USD)</div><div class="card-sub">166 countries total &middot; converted at daily historical EUR/USD per transaction</div></div></div>
+        <div class="card-body"><div class="chart-h380"><canvas id="chGeoRev"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div><div class="card-title">Payouts by Country &mdash; Top 20 (USD)</div><div class="card-sub">Total payout amounts by trader country</div></div></div>
+        <div class="card-body"><div class="chart-h380"><canvas id="chGeoPay"></canvas></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div><div class="card-title">Payout Burden by Country (Payouts &divide; Revenue)</div><div class="card-sub">Countries with the highest cost-to-revenue ratio &mdash; your most expensive markets</div></div></div>
+      <div class="card-body" id="geoBurden"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: ACCOUNT SIZES -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-sizes" class="tab-panel">
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div><div class="card-title">Revenue by Account Size (USD)</div><div class="card-sub">Share of total revenue by challenge size tier</div></div></div>
+        <div class="card-body"><div class="chart-h260"><canvas id="chSizeRev"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div><div class="card-title">Orders by Account Size</div><div class="card-sub">Number of challenges sold per tier</div></div></div>
+        <div class="card-body"><div class="chart-h260"><canvas id="chSizeOrd"></canvas></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div><div class="card-title">Avg Revenue per Order by Account Size (USD)</div></div></div>
+      <div class="card-body"><div class="chart-h200"><canvas id="chSizeAvg"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB: ATTRIBUTION -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-attr" class="tab-panel">
+    <div class="g64">
+      <div class="card">
+        <div class="card-hdr"><div><div class="card-title">Payout Attribution by Reason (initialCreationReason)</div><div class="card-sub">Every payout classified by how the account was originally created</div></div></div>
+        <div class="card-body">
+          <div class="g2">
+            <div class="chart-h260"><canvas id="chAttr"></canvas></div>
+            <div id="attrStats"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Attribution Summary</div></div>
+        <div class="card-body">
+          <div style="text-align:center;padding:12px 0 8px">
+            <div style="font-size:52px;font-weight:800;color:var(--green)" id="attrPct">100%</div>
+            <div style="font-size:13px;color:var(--txt2);margin-top:4px" id="attrPayoutCount">6,127 payouts attributed</div>
+            <div style="font-size:12px;color:var(--txt3);margin-top:2px">6 creation reasons tracked</div>
+          </div>
+          <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+          <div class="stat-r"><span class="stat-k">Total payouts</span><span class="stat-v">6,127</span></div>
+          <div class="stat-r"><span class="stat-k">Total value attributed</span><span class="stat-v" id="attrTotalV">&mdash;</span></div>
+          <div class="stat-r"><span class="stat-k">Reason categories</span><span class="stat-v">6</span></div>
+          <div class="stat-r"><span class="stat-k">Dominant reason</span><span class="stat-v" style="color:var(--green)">Direct Purchase</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">Reason Breakdown &mdash; Descriptions &amp; Stats</div></div>
+      <div class="card-body"><div class="info-grid" id="attrCards"></div></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════════════════
+const D = {"generated_at":"2026-03-18","hist_eur_usd":{"2023-01":1.0787,"2023-02":1.0703,"2023-03":1.0715,"2023-04":1.0991,"2023-05":1.0878,"2023-06":1.0844,"2023-07":1.1059,"2023-08":1.0911,"2023-09":1.0679,"2023-10":1.0565,"2023-11":1.0822,"2023-12":1.0924,"2024-01":1.091,"2024-02":1.0795,"2024-03":1.0871,"2024-04":1.0722,"2024-05":1.0814,"2024-06":1.0762,"2024-07":1.0854,"2024-08":1.1025,"2024-09":1.1111,"2024-10":1.0898,"2024-11":1.0629,"2024-12":1.0472,"2025-01":1.0352,"2025-02":1.0413,"2025-03":1.0805,"2025-04":1.1239,"2025-05":1.1279,"2025-06":1.153,"2025-07":1.1685,"2025-08":1.1656,"2025-09":1.1733,"2025-10":1.1645,"2025-11":1.1565,"2025-12":1.1716,"2026-01":1.1735,"2026-02":1.1826,"2026-03":1.1575},"hist_gbp_usd":{"2024-01":1.2708,"2024-02":1.2631,"2024-03":1.2707,"2024-04":1.251,"2024-05":1.2637,"2024-06":1.2706,"2024-07":1.287,"2024-08":1.2946,"2024-09":1.3221,"2024-10":1.3046,"2024-11":1.2749,"2024-12":1.2635,"2025-01":1.2349,"2025-02":1.2531,"2025-03":1.2901,"2025-04":1.3144,"2025-05":1.3364,"2025-06":1.3561,"2025-07":1.3495,"2025-08":1.3457,"2025-09":1.3498,"2025-10":1.3363,"2025-11":1.3147,"2025-12":1.3394,"2026-01":1.352,"2026-02":1.3579,"2026-03":1.3352},"summary":{"total_revenue_usd":19411941.29,"total_revenue_eur":17299471.59,"total_payouts_usd":11987746.31,"total_ibnr_usd":2019711.34,"total_projected_cost_usd":14007457.65,"total_opex_usd":4852985.32,"total_net_profit_usd":2571209.66,"total_unattributed_usd":902342.98,"realized_margin_pct":38.25,"projected_margin_pct":27.84,"net_margin_pct":13.25,"payout_rate_pct":61.75,"n_orders_total":55283,"n_refunds_total":325,"n_payouts_total":6127,"expected_payout_pct":63.15,"expected_margin_pct":36.85,"opex_assumption_pct":25},"cohorts":[{"cohort_ym":"2023-12","age_months":27,"n_orders":1090,"n_refunds":0,"n_challenge":1090,"n_upgrade":0,"n_payouts":188,"revenue_eur_gross":321522.75,"revenue_eur_refunds":0.0,"revenue_eur_net":321522.75,"payout_usd_realized":264330.29,"payout_eur_realized":9239.57,"payout_gbp_realized":2131.01,"ibnr_usd_est":0.0,"maturity_pct":100.0,"fx_eur_used":1.0924,"revenue_usd_gross":353138.36,"revenue_usd_net":353138.36,"payouts_usd":276983.31,"ibnr_usd":0.0,"projected_cost_usd":276983.31,"net_profit_usd":-12129.53,"realized_margin_pct":21.57,"projected_margin_pct":21.57,"net_margin_pct":-3.43,"payout_rate_pct":78.43,"remaining_curve_pct":0.0,"payout_attribution":{"PURCHASE":{"count":188,"amount_usd":276983.31},"ADMIN":{"count":0,"amount_usd":0.0},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-01","age_months":26,"n_orders":2339,"n_refunds":2,"n_challenge":2339,"n_upgrade":0,"n_payouts":266,"revenue_eur_gross":467825.75,"revenue_eur_refunds":472.0,"revenue_eur_net":467353.75,"payout_usd_realized":529539.63,"payout_eur_realized":5027.95,"payout_gbp_realized":1771.94,"ibnr_usd_est":0.0,"maturity_pct":100.0,"fx_eur_used":1.091,"revenue_usd_gross":509519.49,"revenue_usd_net":509001.64,"payouts_usd":537245.99,"ibnr_usd":0.0,"projected_cost_usd":537245.99,"net_profit_usd":-155494.76,"realized_margin_pct":-5.55,"projected_margin_pct":-5.55,"net_margin_pct":-30.55,"payout_rate_pct":105.55,"remaining_curve_pct":0.0,"payout_attribution":{"PURCHASE":{"count":266,"amount_usd":537245.99},"ADMIN":{"count":0,"amount_usd":0.0},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-02","age_months":25,"n_orders":2083,"n_refunds":6,"n_challenge":2083,"n_upgrade":0,"n_payouts":225,"revenue_eur_gross":526207.4,"revenue_eur_refunds":1902.0,"revenue_eur_net":524305.4,"payout_usd_realized":494502.55,"payout_eur_realized":0.0,"payout_gbp_realized":288.46,"ibnr_usd_est":0.0,"maturity_pct":100.0,"fx_eur_used":1.0795,"revenue_usd_gross":567952.82,"revenue_usd_net":565898.07,"payouts_usd":494865.63,"ibnr_usd":0.0,"projected_cost_usd":494865.63,"net_profit_usd":-70442.08,"realized_margin_pct":12.55,"projected_margin_pct":12.55,"net_margin_pct":-12.45,"payout_rate_pct":87.45,"remaining_curve_pct":0.0,"payout_attribution":{"PURCHASE":{"count":193,"amount_usd":442814.36},"ADMIN":{"count":8,"amount_usd":22942.58},"MIGRATION":{"count":24,"amount_usd":29108.69},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-03","age_months":24,"n_orders":1986,"n_refunds":16,"n_challenge":1986,"n_upgrade":0,"n_payouts":216,"revenue_eur_gross":577774.86,"revenue_eur_refunds":3941.83,"revenue_eur_net":573833.03,"payout_usd_realized":355806.16,"payout_eur_realized":472.87,"payout_gbp_realized":649.73,"ibnr_usd_est":37116.0,"maturity_pct":90.59,"fx_eur_used":1.0871,"revenue_usd_gross":628631.51,"revenue_usd_net":624331.29,"payouts_usd":357149.21,"ibnr_usd":37116.0,"projected_cost_usd":394265.21,"net_profit_usd":111099.26,"realized_margin_pct":42.79,"projected_margin_pct":36.85,"net_margin_pct":17.79,"payout_rate_pct":57.21,"remaining_curve_pct":0.0,"payout_attribution":{"PURCHASE":{"count":153,"amount_usd":275945.54},"ADMIN":{"count":23,"amount_usd":48007.85},"MIGRATION":{"count":40,"amount_usd":33195.82},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-04","age_months":23,"n_orders":2016,"n_refunds":11,"n_challenge":2016,"n_upgrade":0,"n_payouts":208,"revenue_eur_gross":608915.28,"revenue_eur_refunds":5431.63,"revenue_eur_net":603483.65,"payout_usd_realized":385496.35,"payout_eur_realized":5026.91,"payout_gbp_realized":2486.89,"ibnr_usd_est":14487.24,"maturity_pct":96.45,"fx_eur_used":1.0722,"revenue_usd_gross":652694.67,"revenue_usd_net":646883.22,"payouts_usd":394019.51,"ibnr_usd":14487.24,"projected_cost_usd":408506.75,"net_profit_usd":91142.9,"realized_margin_pct":39.09,"projected_margin_pct":36.85,"net_margin_pct":14.09,"payout_rate_pct":60.91,"remaining_curve_pct":0.01,"payout_attribution":{"PURCHASE":{"count":152,"amount_usd":333688.54},"ADMIN":{"count":27,"amount_usd":41808.99},"MIGRATION":{"count":29,"amount_usd":18521.98},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-05","age_months":22,"n_orders":1704,"n_refunds":7,"n_challenge":1704,"n_upgrade":0,"n_payouts":175,"revenue_eur_gross":518222.1,"revenue_eur_refunds":3455.91,"revenue_eur_net":514766.19,"payout_usd_realized":346547.31,"payout_eur_realized":345.36,"payout_gbp_realized":932.82,"ibnr_usd_est":3347.82,"maturity_pct":99.05,"fx_eur_used":1.0814,"revenue_usd_gross":560265.38,"revenue_usd_net":556522.48,"payouts_usd":348096.12,"ibnr_usd":3347.82,"projected_cost_usd":351443.94,"net_profit_usd":69295.74,"realized_margin_pct":37.45,"projected_margin_pct":36.85,"net_margin_pct":12.45,"payout_rate_pct":62.55,"remaining_curve_pct":0.03,"payout_attribution":{"PURCHASE":{"count":131,"amount_usd":277656.77},"ADMIN":{"count":24,"amount_usd":57303.5},"MIGRATION":{"count":19,"amount_usd":12609.62},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":526.23}}},{"cohort_ym":"2024-06","age_months":21,"n_orders":1861,"n_refunds":23,"n_challenge":1861,"n_upgrade":0,"n_payouts":154,"revenue_eur_gross":504369.69,"revenue_eur_refunds":9902.15,"revenue_eur_net":494467.54,"payout_usd_realized":190662.8,"payout_eur_realized":0.0,"payout_gbp_realized":1592.72,"ibnr_usd_est":143521.35,"maturity_pct":57.31,"fx_eur_used":1.0762,"revenue_usd_gross":543070.89,"revenue_usd_net":532426.8,"payouts_usd":192706.17,"ibnr_usd":143521.35,"projected_cost_usd":336227.53,"net_profit_usd":206613.93,"realized_margin_pct":63.81,"projected_margin_pct":36.85,"net_margin_pct":38.81,"payout_rate_pct":36.19,"remaining_curve_pct":0.05,"payout_attribution":{"PURCHASE":{"count":120,"amount_usd":162817.18},"ADMIN":{"count":20,"amount_usd":19886.15},"MIGRATION":{"count":13,"amount_usd":9681.57},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":321.27}}},{"cohort_ym":"2024-07","age_months":20,"n_orders":1763,"n_refunds":19,"n_challenge":1763,"n_upgrade":0,"n_payouts":170,"revenue_eur_gross":531990.1,"revenue_eur_refunds":8614.13,"revenue_eur_net":523375.97,"payout_usd_realized":335236.18,"payout_eur_realized":1716.56,"payout_gbp_realized":472.7,"ibnr_usd_est":21025.86,"maturity_pct":94.14,"fx_eur_used":1.0854,"revenue_usd_gross":577282.8,"revenue_usd_net":567939.63,"payouts_usd":337628.02,"ibnr_usd":21025.86,"projected_cost_usd":358653.88,"net_profit_usd":88326.7,"realized_margin_pct":40.55,"projected_margin_pct":36.85,"net_margin_pct":15.55,"payout_rate_pct":59.45,"remaining_curve_pct":0.07,"payout_attribution":{"PURCHASE":{"count":149,"amount_usd":315313.94},"ADMIN":{"count":15,"amount_usd":18425.42},"MIGRATION":{"count":6,"amount_usd":3888.67},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-08","age_months":19,"n_orders":1946,"n_refunds":11,"n_challenge":1946,"n_upgrade":0,"n_payouts":193,"revenue_eur_gross":595096.6,"revenue_eur_refunds":3138.58,"revenue_eur_net":591958.02,"payout_usd_realized":301837.6,"payout_eur_realized":353.61,"payout_gbp_realized":1313.49,"ibnr_usd_est":107300.34,"maturity_pct":73.91,"fx_eur_used":1.1025,"revenue_usd_gross":654581.28,"revenue_usd_net":651135.29,"payouts_usd":303891.59,"ibnr_usd":107300.34,"projected_cost_usd":411191.94,"net_profit_usd":184459.88,"realized_margin_pct":53.33,"projected_margin_pct":36.85,"net_margin_pct":28.33,"payout_rate_pct":46.67,"remaining_curve_pct":0.11,"payout_attribution":{"PURCHASE":{"count":162,"amount_usd":276109.42},"ADMIN":{"count":21,"amount_usd":17693.79},"MIGRATION":{"count":10,"amount_usd":10088.38},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-09","age_months":18,"n_orders":2254,"n_refunds":16,"n_challenge":2254,"n_upgrade":0,"n_payouts":269,"revenue_eur_gross":516096.88,"revenue_eur_refunds":6827.03,"revenue_eur_net":509269.85,"payout_usd_realized":424531.36,"payout_eur_realized":814.49,"payout_gbp_realized":1773.26,"ibnr_usd_est":679.02,"maturity_pct":100.0,"fx_eur_used":1.1111,"revenue_usd_gross":573456.64,"revenue_usd_net":565853.54,"payouts_usd":427621.69,"ibnr_usd":679.02,"projected_cost_usd":428300.72,"net_profit_usd":-3231.54,"realized_margin_pct":24.43,"projected_margin_pct":24.31,"net_margin_pct":-0.57,"payout_rate_pct":75.57,"remaining_curve_pct":0.12,"payout_attribution":{"PURCHASE":{"count":239,"amount_usd":392038.12},"ADMIN":{"count":21,"amount_usd":14049.36},"MIGRATION":{"count":9,"amount_usd":21534.21},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-10","age_months":17,"n_orders":1811,"n_refunds":30,"n_challenge":1811,"n_upgrade":0,"n_payouts":222,"revenue_eur_gross":512023.96,"revenue_eur_refunds":10738.99,"revenue_eur_net":501284.97,"payout_usd_realized":515466.49,"payout_eur_realized":5948.43,"payout_gbp_realized":0.0,"ibnr_usd_est":764.19,"maturity_pct":100.0,"fx_eur_used":1.0898,"revenue_usd_gross":557554.55,"revenue_usd_net":545853.32,"payouts_usd":521739.67,"ibnr_usd":764.19,"projected_cost_usd":522503.87,"net_profit_usd":-112349.69,"realized_margin_pct":4.42,"projected_margin_pct":4.28,"net_margin_pct":-20.58,"payout_rate_pct":95.58,"remaining_curve_pct":0.14,"payout_attribution":{"PURCHASE":{"count":193,"amount_usd":471408.6},"ADMIN":{"count":25,"amount_usd":39479.21},"MIGRATION":{"count":4,"amount_usd":10851.86},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-11","age_months":16,"n_orders":1957,"n_refunds":10,"n_challenge":1957,"n_upgrade":0,"n_payouts":240,"revenue_eur_gross":569099.69,"revenue_eur_refunds":3419.37,"revenue_eur_net":565680.32,"payout_usd_realized":546582.86,"payout_eur_realized":493.04,"payout_gbp_realized":809.54,"ibnr_usd_est":1080.23,"maturity_pct":100.0,"fx_eur_used":1.0629,"revenue_usd_gross":603792.2,"revenue_usd_net":600130.16,"payouts_usd":548134.21,"ibnr_usd":1080.23,"projected_cost_usd":549214.45,"net_profit_usd":-98036.59,"realized_margin_pct":8.66,"projected_margin_pct":8.48,"net_margin_pct":-16.34,"payout_rate_pct":91.34,"remaining_curve_pct":0.18,"payout_attribution":{"PURCHASE":{"count":210,"amount_usd":520277.77},"ADMIN":{"count":28,"amount_usd":27299.61},"MIGRATION":{"count":2,"amount_usd":556.83},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2024-12","age_months":15,"n_orders":2084,"n_refunds":14,"n_challenge":2084,"n_upgrade":0,"n_payouts":257,"revenue_eur_gross":592814.46,"revenue_eur_refunds":3867.46,"revenue_eur_net":588947.0,"payout_usd_realized":516001.95,"payout_eur_realized":3653.15,"payout_gbp_realized":4827.39,"ibnr_usd_est":2527.35,"maturity_pct":100.0,"fx_eur_used":1.0472,"revenue_usd_gross":620460.12,"revenue_usd_net":616426.63,"payouts_usd":526148.06,"ibnr_usd":2527.35,"projected_cost_usd":528675.41,"net_profit_usd":-63828.09,"realized_margin_pct":14.65,"projected_margin_pct":14.24,"net_margin_pct":-10.35,"payout_rate_pct":85.35,"remaining_curve_pct":0.41,"payout_attribution":{"PURCHASE":{"count":222,"amount_usd":425346.06},"ADMIN":{"count":30,"amount_usd":52202.52},"MIGRATION":{"count":5,"amount_usd":48599.47},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-01","age_months":14,"n_orders":1437,"n_refunds":12,"n_challenge":1437,"n_upgrade":0,"n_payouts":155,"revenue_eur_gross":415363.28,"revenue_eur_refunds":3677.29,"revenue_eur_net":411685.99,"payout_usd_realized":208530.24,"payout_eur_realized":0.0,"payout_gbp_realized":5647.19,"ibnr_usd_est":53231.59,"maturity_pct":80.22,"fx_eur_used":1.0352,"revenue_usd_gross":429966.49,"revenue_usd_net":426157.15,"payouts_usd":215886.65,"ibnr_usd":53231.59,"projected_cost_usd":269118.24,"net_profit_usd":103731.21,"realized_margin_pct":49.34,"projected_margin_pct":36.85,"net_margin_pct":24.34,"payout_rate_pct":50.66,"remaining_curve_pct":0.61,"payout_attribution":{"PURCHASE":{"count":105,"amount_usd":182331.19},"ADMIN":{"count":45,"amount_usd":32645.06},"MIGRATION":{"count":3,"amount_usd":465.97},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":2,"amount_usd":444.43}}},{"cohort_ym":"2025-02","age_months":13,"n_orders":1405,"n_refunds":5,"n_challenge":1405,"n_upgrade":0,"n_payouts":189,"revenue_eur_gross":438376.6,"revenue_eur_refunds":2651.47,"revenue_eur_net":435725.13,"payout_usd_realized":301643.79,"payout_eur_realized":197.09,"payout_gbp_realized":266.75,"ibnr_usd_est":3450.29,"maturity_pct":100.0,"fx_eur_used":1.0413,"revenue_usd_gross":456766.47,"revenue_usd_net":453985.91,"payouts_usd":302213.59,"ibnr_usd":3450.29,"projected_cost_usd":305663.88,"net_profit_usd":38275.84,"realized_margin_pct":33.43,"projected_margin_pct":32.67,"net_margin_pct":8.43,"payout_rate_pct":66.57,"remaining_curve_pct":0.76,"payout_attribution":{"PURCHASE":{"count":154,"amount_usd":266264.0},"ADMIN":{"count":32,"amount_usd":34199.89},"MIGRATION":{"count":2,"amount_usd":1596.1},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":153.6}}},{"cohort_ym":"2025-03","age_months":12,"n_orders":1684,"n_refunds":14,"n_challenge":1684,"n_upgrade":0,"n_payouts":203,"revenue_eur_gross":546285.66,"revenue_eur_refunds":3873.76,"revenue_eur_net":542411.9,"payout_usd_realized":356280.78,"payout_eur_realized":0.0,"payout_gbp_realized":31561.44,"ibnr_usd_est":5979.08,"maturity_pct":100.0,"fx_eur_used":1.0805,"revenue_usd_gross":590376.38,"revenue_usd_net":586184.48,"payouts_usd":397710.24,"ibnr_usd":5979.08,"projected_cost_usd":403689.32,"net_profit_usd":41928.11,"realized_margin_pct":32.15,"projected_margin_pct":31.13,"net_margin_pct":7.15,"payout_rate_pct":67.85,"remaining_curve_pct":1.02,"payout_attribution":{"PURCHASE":{"count":161,"amount_usd":362706.15},"ADMIN":{"count":40,"amount_usd":34179.73},"MIGRATION":{"count":2,"amount_usd":824.36},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-04","age_months":11,"n_orders":1780,"n_refunds":9,"n_challenge":1780,"n_upgrade":0,"n_payouts":212,"revenue_eur_gross":617709.98,"revenue_eur_refunds":2282.42,"revenue_eur_net":615427.56,"payout_usd_realized":424068.97,"payout_eur_realized":3720.65,"payout_gbp_realized":0.0,"ibnr_usd_est":8420.21,"maturity_pct":98.3,"fx_eur_used":1.1239,"revenue_usd_gross":692732.51,"revenue_usd_net":690181.04,"payouts_usd":428422.8,"ibnr_usd":8420.21,"projected_cost_usd":436843.01,"net_profit_usd":89212.98,"realized_margin_pct":37.93,"projected_margin_pct":36.71,"net_margin_pct":12.93,"payout_rate_pct":62.07,"remaining_curve_pct":1.22,"payout_attribution":{"PURCHASE":{"count":182,"amount_usd":400369.08},"ADMIN":{"count":30,"amount_usd":28053.72},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-05","age_months":10,"n_orders":1732,"n_refunds":9,"n_challenge":1717,"n_upgrade":15,"n_payouts":205,"revenue_eur_gross":618164.31,"revenue_eur_refunds":1736.67,"revenue_eur_net":616427.64,"payout_usd_realized":419943.77,"payout_eur_realized":0.0,"payout_gbp_realized":1869.9,"ibnr_usd_est":16647.24,"maturity_pct":96.21,"fx_eur_used":1.1279,"revenue_usd_gross":697312.36,"revenue_usd_net":695358.34,"payouts_usd":422471.56,"ibnr_usd":16647.24,"projected_cost_usd":439118.79,"net_profit_usd":99047.2,"realized_margin_pct":39.24,"projected_margin_pct":36.85,"net_margin_pct":14.24,"payout_rate_pct":60.76,"remaining_curve_pct":1.57,"payout_attribution":{"PURCHASE":{"count":175,"amount_usd":391058.82},"ADMIN":{"count":30,"amount_usd":31412.74},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-06","age_months":9,"n_orders":1933,"n_refunds":5,"n_challenge":1897,"n_upgrade":36,"n_payouts":336,"revenue_eur_gross":616932.13,"revenue_eur_refunds":2583.69,"revenue_eur_net":614348.44,"payout_usd_realized":618812.85,"payout_eur_realized":17428.46,"payout_gbp_realized":3939.58,"ibnr_usd_est":14237.01,"maturity_pct":100.0,"fx_eur_used":1.153,"revenue_usd_gross":711281.21,"revenue_usd_net":708308.73,"payouts_usd":644436.74,"ibnr_usd":14237.01,"projected_cost_usd":658673.74,"net_profit_usd":-113205.19,"realized_margin_pct":9.02,"projected_margin_pct":7.01,"net_margin_pct":-15.98,"payout_rate_pct":90.98,"remaining_curve_pct":2.01,"payout_attribution":{"PURCHASE":{"count":320,"amount_usd":626640.81},"ADMIN":{"count":16,"amount_usd":17795.93},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-07","age_months":8,"n_orders":1996,"n_refunds":9,"n_challenge":1959,"n_upgrade":37,"n_payouts":346,"revenue_eur_gross":687074.19,"revenue_eur_refunds":1851.67,"revenue_eur_net":685222.52,"payout_usd_realized":637490.96,"payout_eur_realized":712.06,"payout_gbp_realized":6069.07,"ibnr_usd_est":21198.94,"maturity_pct":100.0,"fx_eur_used":1.1685,"revenue_usd_gross":802098.58,"revenue_usd_net":799959.83,"payouts_usd":646480.25,"ibnr_usd":21198.94,"projected_cost_usd":667679.19,"net_profit_usd":-46510.38,"realized_margin_pct":19.19,"projected_margin_pct":16.54,"net_margin_pct":-5.81,"payout_rate_pct":80.81,"remaining_curve_pct":2.65,"payout_attribution":{"PURCHASE":{"count":325,"amount_usd":616223.5},"ADMIN":{"count":19,"amount_usd":29556.25},"MIGRATION":{"count":2,"amount_usd":700.5},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-08","age_months":7,"n_orders":1781,"n_refunds":10,"n_challenge":1752,"n_upgrade":29,"n_payouts":277,"revenue_eur_gross":661867.57,"revenue_eur_refunds":4250.92,"revenue_eur_net":657616.65,"payout_usd_realized":673946.55,"payout_eur_realized":0.0,"payout_gbp_realized":1035.11,"ibnr_usd_est":30264.71,"maturity_pct":100.0,"fx_eur_used":1.1656,"revenue_usd_gross":771145.97,"revenue_usd_net":766195.27,"payouts_usd":675318.5,"ibnr_usd":30264.71,"projected_cost_usd":705583.21,"net_profit_usd":-100672.05,"realized_margin_pct":11.86,"projected_margin_pct":7.91,"net_margin_pct":-13.14,"payout_rate_pct":88.14,"remaining_curve_pct":3.95,"payout_attribution":{"PURCHASE":{"count":257,"amount_usd":657542.47},"ADMIN":{"count":18,"amount_usd":16137.88},"MIGRATION":{"count":1,"amount_usd":167.2},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":1,"amount_usd":1470.95},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-09","age_months":6,"n_orders":2204,"n_refunds":19,"n_challenge":2142,"n_upgrade":62,"n_payouts":267,"revenue_eur_gross":715699.13,"revenue_eur_refunds":6032.79,"revenue_eur_net":709666.34,"payout_usd_realized":550595.85,"payout_eur_realized":0.0,"payout_gbp_realized":112.21,"ibnr_usd_est":46820.98,"maturity_pct":100.0,"fx_eur_used":1.1733,"revenue_usd_gross":840200.02,"revenue_usd_net":833113.6,"payouts_usd":550747.42,"ibnr_usd":46820.98,"projected_cost_usd":597568.41,"net_profit_usd":74087.78,"realized_margin_pct":33.89,"projected_margin_pct":28.27,"net_margin_pct":8.89,"payout_rate_pct":66.11,"remaining_curve_pct":5.62,"payout_attribution":{"PURCHASE":{"count":241,"amount_usd":523222.72},"ADMIN":{"count":17,"amount_usd":20353.22},"MIGRATION":{"count":1,"amount_usd":327.19},"GIVEAWAY":{"count":5,"amount_usd":2743.2},"FREE_PARTNER":{"count":3,"amount_usd":4101.09},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-10","age_months":5,"n_orders":3133,"n_refunds":14,"n_challenge":3068,"n_upgrade":65,"n_payouts":331,"revenue_eur_gross":1054933.73,"revenue_eur_refunds":4144.34,"revenue_eur_net":1050789.39,"payout_usd_realized":657009.99,"payout_eur_realized":0.0,"payout_gbp_realized":82.14,"ibnr_usd_est":115099.14,"maturity_pct":85.1,"fx_eur_used":1.1645,"revenue_usd_gross":1227641.17,"revenue_usd_net":1222832.64,"payouts_usd":657119.67,"ibnr_usd":115099.14,"projected_cost_usd":772218.81,"net_profit_usd":260004.81,"realized_margin_pct":46.26,"projected_margin_pct":36.85,"net_margin_pct":21.26,"payout_rate_pct":53.74,"remaining_curve_pct":7.54,"payout_attribution":{"PURCHASE":{"count":316,"amount_usd":642412.28},"ADMIN":{"count":14,"amount_usd":14289.52},"MIGRATION":{"count":1,"amount_usd":417.87},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-11","age_months":4,"n_orders":3139,"n_refunds":11,"n_challenge":3097,"n_upgrade":42,"n_payouts":315,"revenue_eur_gross":1065531.79,"revenue_eur_refunds":5664.85,"revenue_eur_net":1059866.94,"payout_usd_realized":668995.25,"payout_eur_realized":0.0,"payout_gbp_realized":0.0,"ibnr_usd_est":124043.31,"maturity_pct":86.43,"fx_eur_used":1.1565,"revenue_usd_gross":1232265.74,"revenue_usd_net":1225724.44,"payouts_usd":668995.25,"ibnr_usd":124043.31,"projected_cost_usd":793038.56,"net_profit_usd":250298.08,"realized_margin_pct":45.42,"projected_margin_pct":35.3,"net_margin_pct":20.42,"payout_rate_pct":54.58,"remaining_curve_pct":10.12,"payout_attribution":{"PURCHASE":{"count":291,"amount_usd":655869.75},"ADMIN":{"count":10,"amount_usd":7883.17},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":12,"amount_usd":3743.85},"FREE_PARTNER":{"count":2,"amount_usd":1498.48},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2025-12","age_months":3,"n_orders":2488,"n_refunds":22,"n_challenge":2455,"n_upgrade":33,"n_payouts":247,"revenue_eur_gross":887005.7,"revenue_eur_refunds":7961.62,"revenue_eur_net":879044.08,"payout_usd_realized":544812.02,"payout_eur_realized":0.0,"payout_gbp_realized":0.0,"ibnr_usd_est":148969.58,"maturity_pct":83.74,"fx_eur_used":1.1716,"revenue_usd_gross":1039567.82,"revenue_usd_net":1030218.39,"payouts_usd":544812.02,"ibnr_usd":148969.58,"projected_cost_usd":693781.6,"net_profit_usd":227851.78,"realized_margin_pct":47.12,"projected_margin_pct":32.66,"net_margin_pct":22.12,"payout_rate_pct":52.88,"remaining_curve_pct":14.46,"payout_attribution":{"PURCHASE":{"count":227,"amount_usd":532460.53},"ADMIN":{"count":10,"amount_usd":11036.6},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":10,"amount_usd":1314.89},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2026-01","age_months":2,"n_orders":2412,"n_refunds":8,"n_challenge":2380,"n_upgrade":32,"n_payouts":173,"revenue_eur_gross":946853.65,"revenue_eur_refunds":1604.38,"revenue_eur_net":945249.27,"payout_usd_realized":445272.46,"payout_eur_realized":0.0,"payout_gbp_realized":346.9,"ibnr_usd_est":256407.5,"maturity_pct":63.48,"fx_eur_used":1.1735,"revenue_usd_gross":1113774.24,"revenue_usd_net":1111890.84,"payouts_usd":445751.56,"ibnr_usd":256407.5,"projected_cost_usd":702159.07,"net_profit_usd":388166.57,"realized_margin_pct":59.91,"projected_margin_pct":36.85,"net_margin_pct":34.91,"payout_rate_pct":40.09,"remaining_curve_pct":22.37,"payout_attribution":{"PURCHASE":{"count":149,"amount_usd":433167.02},"ADMIN":{"count":11,"amount_usd":10422.21},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":13,"amount_usd":2162.33},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2026-02","age_months":1,"n_orders":2476,"n_refunds":11,"n_challenge":2450,"n_upgrade":26,"n_payouts":69,"revenue_eur_gross":989755.63,"revenue_eur_refunds":4107.47,"revenue_eur_net":985648.16,"payout_usd_realized":105473.9,"payout_eur_realized":0.0,"payout_gbp_realized":298.12,"ibnr_usd_est":630462.65,"maturity_pct":14.38,"fx_eur_used":1.1826,"revenue_usd_gross":1170880.6,"revenue_usd_net":1166022.98,"payouts_usd":105880.86,"ibnr_usd":630462.65,"projected_cost_usd":736343.51,"net_profit_usd":768636.37,"realized_margin_pct":90.92,"projected_margin_pct":36.85,"net_margin_pct":65.92,"payout_rate_pct":9.08,"remaining_curve_pct":39.46,"payout_attribution":{"PURCHASE":{"count":41,"amount_usd":87326.99},"ADMIN":{"count":14,"amount_usd":14045.67},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":14,"amount_usd":4508.2},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"cohort_ym":"2026-03","age_months":0,"n_orders":789,"n_refunds":2,"n_challenge":781,"n_upgrade":8,"n_payouts":19,"revenue_eur_gross":312422.9,"revenue_eur_refunds":2329.76,"revenue_eur_net":310093.14,"payout_usd_realized":15215.67,"payout_eur_realized":0.0,"payout_gbp_realized":41.06,"ibnr_usd_est":212629.71,"maturity_pct":6.71,"fx_eur_used":1.1575,"revenue_usd_gross":362965.59,"revenue_usd_net":360267.22,"payouts_usd":15270.02,"ibnr_usd":212629.71,"projected_cost_usd":227899.73,"net_profit_usd":254930.39,"realized_margin_pct":95.76,"projected_margin_pct":36.74,"net_margin_pct":70.76,"payout_rate_pct":4.24,"remaining_curve_pct":59.02,"payout_attribution":{"PURCHASE":{"count":1,"amount_usd":162.42},"ADMIN":{"count":10,"amount_usd":13747.83},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":8,"amount_usd":1359.77},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}}],"payout_curve_monthly_pct":[0.0413,0.1956,0.1709,0.0791,0.0434,0.0258,0.0192,0.0167,0.013,0.0064,0.0044,0.0035,0.002,0.0026,0.0015,0.002,0.0023,0.0004,0.0002,0.0001,0.0004,0.0002,0.0002,0.0002,0.0001],"payout_curve_cumulative_pct":[0.0413,0.2369,0.4078,0.4869,0.5303,0.5561,0.5753,0.592,0.605,0.6114,0.6158,0.6193,0.6213,0.6239,0.6254,0.6274,0.6297,0.6301,0.6303,0.6304,0.6308,0.631,0.6312,0.6314,0.6315],"monthly_payouts_usd":[{"month":"2024-02","payouts_usd":237455.31,"n_payouts":93,"attribution":{"PURCHASE":{"count":61,"amount_usd":185404.04},"ADMIN":{"count":8,"amount_usd":22942.58},"MIGRATION":{"count":24,"amount_usd":29108.69},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-03","payouts_usd":594026.21,"n_payouts":253,"attribution":{"PURCHASE":{"count":190,"amount_usd":512822.54},"ADMIN":{"count":23,"amount_usd":48007.85},"MIGRATION":{"count":40,"amount_usd":33195.82},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-04","payouts_usd":478349.42,"n_payouts":264,"attribution":{"PURCHASE":{"count":208,"amount_usd":418018.44},"ADMIN":{"count":27,"amount_usd":41808.99},"MIGRATION":{"count":29,"amount_usd":18521.98},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-05","payouts_usd":380760.49,"n_payouts":205,"attribution":{"PURCHASE":{"count":161,"amount_usd":310321.14},"ADMIN":{"count":24,"amount_usd":57303.5},"MIGRATION":{"count":19,"amount_usd":12609.62},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":526.23}}},{"month":"2024-06","payouts_usd":356016.54,"n_payouts":212,"attribution":{"PURCHASE":{"count":178,"amount_usd":326127.54},"ADMIN":{"count":20,"amount_usd":19886.15},"MIGRATION":{"count":13,"amount_usd":9681.57},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":321.27}}},{"month":"2024-07","payouts_usd":323355.67,"n_payouts":178,"attribution":{"PURCHASE":{"count":157,"amount_usd":301041.59},"ADMIN":{"count":15,"amount_usd":18425.42},"MIGRATION":{"count":6,"amount_usd":3888.67},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-08","payouts_usd":278570.33,"n_payouts":155,"attribution":{"PURCHASE":{"count":124,"amount_usd":250788.16},"ADMIN":{"count":21,"amount_usd":17693.79},"MIGRATION":{"count":10,"amount_usd":10088.38},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-09","payouts_usd":296578.62,"n_payouts":157,"attribution":{"PURCHASE":{"count":127,"amount_usd":260995.05},"ADMIN":{"count":21,"amount_usd":14049.36},"MIGRATION":{"count":9,"amount_usd":21534.21},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-10","payouts_usd":322393.81,"n_payouts":164,"attribution":{"PURCHASE":{"count":135,"amount_usd":272062.74},"ADMIN":{"count":25,"amount_usd":39479.21},"MIGRATION":{"count":4,"amount_usd":10851.86},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-11","payouts_usd":371303.4,"n_payouts":185,"attribution":{"PURCHASE":{"count":155,"amount_usd":343446.96},"ADMIN":{"count":28,"amount_usd":27299.61},"MIGRATION":{"count":2,"amount_usd":556.83},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-12","payouts_usd":463423.23,"n_payouts":241,"attribution":{"PURCHASE":{"count":206,"amount_usd":362621.23},"ADMIN":{"count":30,"amount_usd":52202.52},"MIGRATION":{"count":5,"amount_usd":48599.47},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-01","payouts_usd":416748.86,"n_payouts":255,"attribution":{"PURCHASE":{"count":205,"amount_usd":383193.4},"ADMIN":{"count":45,"amount_usd":32645.06},"MIGRATION":{"count":3,"amount_usd":465.97},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":2,"amount_usd":444.43}}},{"month":"2025-02","payouts_usd":384115.16,"n_payouts":200,"attribution":{"PURCHASE":{"count":165,"amount_usd":348165.57},"ADMIN":{"count":32,"amount_usd":34199.89},"MIGRATION":{"count":2,"amount_usd":1596.1},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":153.6}}},{"month":"2025-03","payouts_usd":300403.82,"n_payouts":197,"attribution":{"PURCHASE":{"count":155,"amount_usd":265399.73},"ADMIN":{"count":40,"amount_usd":34179.73},"MIGRATION":{"count":2,"amount_usd":824.36},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-04","payouts_usd":394875.03,"n_payouts":201,"attribution":{"PURCHASE":{"count":171,"amount_usd":366821.31},"ADMIN":{"count":30,"amount_usd":28053.72},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-05","payouts_usd":425550.13,"n_payouts":217,"attribution":{"PURCHASE":{"count":187,"amount_usd":394137.39},"ADMIN":{"count":30,"amount_usd":31412.74},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-06","payouts_usd":492252.41,"n_payouts":175,"attribution":{"PURCHASE":{"count":159,"amount_usd":474456.48},"ADMIN":{"count":16,"amount_usd":17795.93},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-07","payouts_usd":486269.29,"n_payouts":226,"attribution":{"PURCHASE":{"count":205,"amount_usd":456012.53},"ADMIN":{"count":19,"amount_usd":29556.25},"MIGRATION":{"count":2,"amount_usd":700.5},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-08","payouts_usd":532813.8,"n_payouts":298,"attribution":{"PURCHASE":{"count":278,"amount_usd":515037.77},"ADMIN":{"count":18,"amount_usd":16137.88},"MIGRATION":{"count":1,"amount_usd":167.2},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":1,"amount_usd":1470.95},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-09","payouts_usd":547870.71,"n_payouts":255,"attribution":{"PURCHASE":{"count":229,"amount_usd":520346.01},"ADMIN":{"count":17,"amount_usd":20353.22},"MIGRATION":{"count":1,"amount_usd":327.19},"GIVEAWAY":{"count":5,"amount_usd":2743.2},"FREE_PARTNER":{"count":3,"amount_usd":4101.09},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-10","payouts_usd":595994.24,"n_payouts":294,"attribution":{"PURCHASE":{"count":279,"amount_usd":581286.84},"ADMIN":{"count":14,"amount_usd":14289.52},"MIGRATION":{"count":1,"amount_usd":417.87},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-11","payouts_usd":704018.62,"n_payouts":345,"attribution":{"PURCHASE":{"count":321,"amount_usd":690893.12},"ADMIN":{"count":10,"amount_usd":7883.17},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":12,"amount_usd":3743.85},"FREE_PARTNER":{"count":2,"amount_usd":1498.48},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-12","payouts_usd":719474.63,"n_payouts":356,"attribution":{"PURCHASE":{"count":336,"amount_usd":707123.14},"ADMIN":{"count":10,"amount_usd":11036.6},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":10,"amount_usd":1314.89},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2026-01","payouts_usd":742232.39,"n_payouts":411,"attribution":{"PURCHASE":{"count":387,"amount_usd":729647.84},"ADMIN":{"count":11,"amount_usd":10422.21},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":13,"amount_usd":2162.33},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2026-02","payouts_usd":666002.07,"n_payouts":353,"attribution":{"PURCHASE":{"count":325,"amount_usd":647448.2},"ADMIN":{"count":14,"amount_usd":14045.67},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":14,"amount_usd":4508.2},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2026-03","payouts_usd":476892.16,"n_payouts":237,"attribution":{"PURCHASE":{"count":219,"amount_usd":461784.55},"ADMIN":{"count":10,"amount_usd":13747.83},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":8,"amount_usd":1359.77},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}}],"countries":[{"country":"TUR","revenue_eur":3953616.96,"n_orders":15540},{"country":"USA","revenue_eur":1280879.41,"n_orders":3483},{"country":"GBR","revenue_eur":1096351.4,"n_orders":3017},{"country":"NLD","revenue_eur":1000171.74,"n_orders":3421},{"country":"IND","revenue_eur":643979.77,"n_orders":1924},{"country":"POL","revenue_eur":625745.01,"n_orders":1591},{"country":"DEU","revenue_eur":603641.53,"n_orders":1924},{"country":"IRQ","revenue_eur":536926.58,"n_orders":2341},{"country":"PAK","revenue_eur":513661.56,"n_orders":1525},{"country":"BEL","revenue_eur":453711.15,"n_orders":1117},{"country":"ITA","revenue_eur":431689.69,"n_orders":1068},{"country":"ESP","revenue_eur":378042.99,"n_orders":1415},{"country":"ARE","revenue_eur":338734.09,"n_orders":656},{"country":"FRA","revenue_eur":322668.27,"n_orders":832},{"country":"CAN","revenue_eur":312283.1,"n_orders":1001},{"country":"ROU","revenue_eur":261850.57,"n_orders":788},{"country":"MYS","revenue_eur":233181.69,"n_orders":578},{"country":"BGR","revenue_eur":207836.54,"n_orders":535},{"country":"AUS","revenue_eur":206905.82,"n_orders":543},{"country":"UKR","revenue_eur":205083.38,"n_orders":819},{"country":"AUT","revenue_eur":175564.64,"n_orders":421},{"country":"NGA","revenue_eur":175424.81,"n_orders":483},{"country":"IDN","revenue_eur":172674.69,"n_orders":496},{"country":"SGP","revenue_eur":167416.77,"n_orders":356},{"country":"SWE","revenue_eur":156180.97,"n_orders":458},{"country":"CHE","revenue_eur":149567.02,"n_orders":432},{"country":"SVK","revenue_eur":142486.47,"n_orders":262},{"country":"CZE","revenue_eur":125443.7,"n_orders":307},{"country":"RUS","revenue_eur":122095.23,"n_orders":391},{"country":"THA","revenue_eur":121882.4,"n_orders":400},{"country":"KOR","revenue_eur":114130.17,"n_orders":341},{"country":"PHL","revenue_eur":108328.13,"n_orders":256},{"country":"CHN","revenue_eur":97123.84,"n_orders":262},{"country":"PRT","revenue_eur":90102.25,"n_orders":274},{"country":"BRA","revenue_eur":88991.18,"n_orders":201},{"country":"HRV","revenue_eur":83520.83,"n_orders":296},{"country":"KEN","revenue_eur":82839.02,"n_orders":277},{"country":"LAO","revenue_eur":71165.8,"n_orders":125},{"country":"SAU","revenue_eur":69889.85,"n_orders":204},{"country":"HKG","revenue_eur":69223.52,"n_orders":144},{"country":"MEX","revenue_eur":65262.23,"n_orders":191},{"country":"MAR","revenue_eur":64410.39,"n_orders":147},{"country":"NOR","revenue_eur":60918.79,"n_orders":133},{"country":"ZAF","revenue_eur":55831.92,"n_orders":194},{"country":"LTU","revenue_eur":52854.97,"n_orders":124},{"country":"TWN","revenue_eur":50949.9,"n_orders":122},{"country":"ISR","revenue_eur":50271.76,"n_orders":165},{"country":"BGD","revenue_eur":49107.97,"n_orders":143},{"country":"ARG","revenue_eur":48053.58,"n_orders":208},{"country":"GRC","revenue_eur":46060.09,"n_orders":207},{"country":"IRL","revenue_eur":45089.84,"n_orders":153},{"country":"JPN","revenue_eur":43600.09,"n_orders":102},{"country":"SVN","revenue_eur":39277.19,"n_orders":111},{"country":"HUN","revenue_eur":34530.42,"n_orders":166},{"country":"CYP","revenue_eur":33769.61,"n_orders":102},{"country":"AZE","revenue_eur":32903.33,"n_orders":113},{"country":"MDA","revenue_eur":30261.58,"n_orders":98},{"country":"VNM","revenue_eur":29463.88,"n_orders":130},{"country":"COL","revenue_eur":25930.66,"n_orders":94},{"country":"EGY","revenue_eur":25858.28,"n_orders":63},{"country":"KHM","revenue_eur":25746.92,"n_orders":70},{"country":"UGA","revenue_eur":25099.04,"n_orders":114},{"country":"DZA","revenue_eur":20408.32,"n_orders":70},{"country":"EST","revenue_eur":20172.68,"n_orders":47},{"country":"FIN","revenue_eur":20045.93,"n_orders":87},{"country":"KAZ","revenue_eur":19076.71,"n_orders":81},{"country":"DNK","revenue_eur":18664.15,"n_orders":71},{"country":"XKK","revenue_eur":16843.64,"n_orders":35},{"country":"AND","revenue_eur":16575.39,"n_orders":41},{"country":"GEO","revenue_eur":15725.71,"n_orders":54},{"country":"ALB","revenue_eur":14685.69,"n_orders":37},{"country":"MMR","revenue_eur":14124.05,"n_orders":84},{"country":"BLR","revenue_eur":14065.39,"n_orders":59},{"country":"LBN","revenue_eur":11958.84,"n_orders":33},{"country":"AFG","revenue_eur":11878.15,"n_orders":56},{"country":"TUN","revenue_eur":11296.85,"n_orders":36},{"country":"GHA","revenue_eur":10795.57,"n_orders":31},{"country":"SRB","revenue_eur":10544.66,"n_orders":45},{"country":"IRN","revenue_eur":10513.51,"n_orders":26},{"country":"GTM","revenue_eur":10326.58,"n_orders":55},{"country":"UZB","revenue_eur":9006.97,"n_orders":33},{"country":"PRI","revenue_eur":8907.26,"n_orders":24},{"country":"CHL","revenue_eur":8827.53,"n_orders":32},{"country":"VEN","revenue_eur":8666.54,"n_orders":37},{"country":"LKA","revenue_eur":8617.89,"n_orders":42},{"country":"KWT","revenue_eur":8045.35,"n_orders":30},{"country":"JOR","revenue_eur":8017.72,"n_orders":17},{"country":"LVA","revenue_eur":7627.0,"n_orders":56},{"country":"MNG","revenue_eur":7500.18,"n_orders":25},{"country":"LUX","revenue_eur":7348.08,"n_orders":42},{"country":"DOM","revenue_eur":6766.61,"n_orders":20},{"country":"ETH","revenue_eur":6610.35,"n_orders":16},{"country":"TGO","revenue_eur":6331.31,"n_orders":11},{"country":"OMN","revenue_eur":6294.44,"n_orders":32},{"country":"NZL","revenue_eur":6040.95,"n_orders":23},{"country":"PER","revenue_eur":5246.18,"n_orders":22},{"country":"TZA","revenue_eur":5198.03,"n_orders":11},{"country":"BHR","revenue_eur":4954.41,"n_orders":10},{"country":"SOM","revenue_eur":4645.14,"n_orders":31},{"country":"ARM","revenue_eur":4595.9,"n_orders":23},{"country":"MOZ","revenue_eur":4516.95,"n_orders":7},{"country":"MLT","revenue_eur":4123.42,"n_orders":11},{"country":"KGZ","revenue_eur":4072.53,"n_orders":7},{"country":"MCO","revenue_eur":4032.6,"n_orders":3},{"country":"URY","revenue_eur":3586.58,"n_orders":6},{"country":"ZMB","revenue_eur":3561.39,"n_orders":7},{"country":"UMI","revenue_eur":3015.75,"n_orders":12},{"country":"QAT","revenue_eur":3003.34,"n_orders":15},{"country":"MNE","revenue_eur":2815.38,"n_orders":4},{"country":"NPL","revenue_eur":2803.51,"n_orders":13},{"country":"ZWE","revenue_eur":2707.83,"n_orders":14},{"country":"CMR","revenue_eur":2670.96,"n_orders":17},{"country":"SLE","revenue_eur":2600.24,"n_orders":4},{"country":"BEN","revenue_eur":2432.22,"n_orders":8},{"country":"JAM","revenue_eur":2285.24,"n_orders":10},{"country":"PRY","revenue_eur":1939.25,"n_orders":7},{"country":"ECU","revenue_eur":1679.38,"n_orders":10},{"country":"GUY","revenue_eur":1584.0,"n_orders":4},{"country":"PLW","revenue_eur":1570.67,"n_orders":5},{"country":"ISL","revenue_eur":1438.13,"n_orders":18},{"country":"LBY","revenue_eur":1368.03,"n_orders":3},{"country":"GGY","revenue_eur":1288.45,"n_orders":3},{"country":"GLP","revenue_eur":1207.84,"n_orders":8},{"country":"MLI","revenue_eur":1170.06,"n_orders":3},{"country":"GUF","revenue_eur":1149.42,"n_orders":8},{"country":"TCD","revenue_eur":1143.88,"n_orders":2},{"country":"BHS","revenue_eur":1047.73,"n_orders":12},{"country":"CUW","revenue_eur":1045.78,"n_orders":6},{"country":"AGO","revenue_eur":975.0,"n_orders":1},{"country":"BIH","revenue_eur":951.16,"n_orders":7},{"country":"CRI","revenue_eur":939.28,"n_orders":7},{"country":"BRN","revenue_eur":935.41,"n_orders":9},{"country":"SYR","revenue_eur":935.0,"n_orders":3},{"country":"MDV","revenue_eur":931.26,"n_orders":6},{"country":"GNQ","revenue_eur":900.9,"n_orders":1},{"country":"MKD","revenue_eur":860.74,"n_orders":7},{"country":"TJK","revenue_eur":775.25,"n_orders":12},{"country":"SUR","revenue_eur":769.48,"n_orders":3},{"country":"BDI","revenue_eur":693.0,"n_orders":2},{"country":"CIV","revenue_eur":592.78,"n_orders":4},{"country":"PYF","revenue_eur":568.98,"n_orders":6},{"country":"BFA","revenue_eur":555.5,"n_orders":3},{"country":"COD","revenue_eur":550.0,"n_orders":2},{"country":"SYC","revenue_eur":420.75,"n_orders":1},{"country":"NIC","revenue_eur":420.75,"n_orders":1},{"country":"VIR","revenue_eur":396.0,"n_orders":1},{"country":"GRD","revenue_eur":346.5,"n_orders":1},{"country":"TTO","revenue_eur":327.0,"n_orders":3},{"country":"ATG","revenue_eur":318.25,"n_orders":2},{"country":"CPV","revenue_eur":258.64,"n_orders":4},{"country":"SLV","revenue_eur":256.3,"n_orders":4},{"country":"SLB","revenue_eur":236.0,"n_orders":1},{"country":"LBR","revenue_eur":217.85,"n_orders":4},{"country":"SEN","revenue_eur":208.48,"n_orders":3},{"country":"LSO","revenue_eur":197.38,"n_orders":3},{"country":"NAM","revenue_eur":196.85,"n_orders":2},{"country":"PAN","revenue_eur":178.6,"n_orders":2},{"country":"PSE","revenue_eur":155.63,"n_orders":1},{"country":"TCA","revenue_eur":149.88,"n_orders":3},{"country":"YEM","revenue_eur":146.3,"n_orders":1},{"country":"RWA","revenue_eur":123.5,"n_orders":2},{"country":"SDN","revenue_eur":102.85,"n_orders":1},{"country":"TKM","revenue_eur":80.75,"n_orders":1},{"country":"BWA","revenue_eur":71.25,"n_orders":1},{"country":"MUS","revenue_eur":65.34,"n_orders":1},{"country":"LCA","revenue_eur":51.98,"n_orders":1}],"payout_by_country":[{"country":"TUR","payout_usd":3200376.24,"n_payouts":1432},{"country":"GBR","payout_usd":817958.17,"n_payouts":319},{"country":"PAK","payout_usd":673444.17,"n_payouts":469},{"country":"NLD","payout_usd":582831.12,"n_payouts":290},{"country":"IND","payout_usd":496329.1,"n_payouts":317},{"country":"USA","payout_usd":454071.24,"n_payouts":149},{"country":"ITA","payout_usd":367980.87,"n_payouts":196},{"country":"DEU","payout_usd":311541.23,"n_payouts":169},{"country":"ARE","payout_usd":307930.21,"n_payouts":137},{"country":"ESP","payout_usd":275073.25,"n_payouts":175},{"country":"IRQ","payout_usd":241938.47,"n_payouts":125},{"country":"FRA","payout_usd":220562.31,"n_payouts":93},{"country":"ROU","payout_usd":207647.35,"n_payouts":96},{"country":"POL","payout_usd":203334.31,"n_payouts":103},{"country":"NGA","payout_usd":200871.58,"n_payouts":220},{"country":"MYS","payout_usd":193543.24,"n_payouts":103},{"country":"THA","payout_usd":189272.19,"n_payouts":132},{"country":"AUT","payout_usd":188940.74,"n_payouts":69},{"country":"BEL","payout_usd":183141.87,"n_payouts":87},{"country":"BGR","payout_usd":176586.81,"n_payouts":88},{"country":"CAN","payout_usd":162556.1,"n_payouts":75},{"country":"UKR","payout_usd":141252.8,"n_payouts":95},{"country":"IDN","payout_usd":139068.5,"n_payouts":73},{"country":"AUS","payout_usd":115143.3,"n_payouts":62},{"country":"PRT","payout_usd":103652.47,"n_payouts":57},{"country":"PHL","payout_usd":96723.83,"n_payouts":54},{"country":"CZE","payout_usd":93153.09,"n_payouts":35},{"country":"CHN","payout_usd":89972.16,"n_payouts":43},{"country":"SGP","payout_usd":82509.81,"n_payouts":29},{"country":"SAU","payout_usd":79686.79,"n_payouts":36},{"country":"RUS","payout_usd":64111.94,"n_payouts":31},{"country":"KEN","payout_usd":59371.53,"n_payouts":52},{"country":"ARG","payout_usd":58593.91,"n_payouts":18},{"country":"HRV","payout_usd":55251.94,"n_payouts":24},{"country":"VNM","payout_usd":54875.01,"n_payouts":31},{"country":"CHE","payout_usd":54411.44,"n_payouts":16},{"country":"TWN","payout_usd":49962.97,"n_payouts":28},{"country":"CYP","payout_usd":48309.8,"n_payouts":20},{"country":"BGD","payout_usd":48148.99,"n_payouts":30},{"country":"MAR","payout_usd":47156.69,"n_payouts":15},{"country":"SWE","payout_usd":43157.81,"n_payouts":34},{"country":"GHA","payout_usd":41893.44,"n_payouts":9},{"country":"MEX","payout_usd":40817.65,"n_payouts":25},{"country":"LAO","payout_usd":40728.99,"n_payouts":18},{"country":"SVK","payout_usd":40569.27,"n_payouts":24},{"country":"AFG","payout_usd":37708.36,"n_payouts":28},{"country":"BRA","payout_usd":37001.9,"n_payouts":24},{"country":"JPN","payout_usd":33145.25,"n_payouts":16},{"country":"ISR","payout_usd":32733.84,"n_payouts":17},{"country":"KOR","payout_usd":31455.67,"n_payouts":21},{"country":"MLT","payout_usd":31049.06,"n_payouts":10},{"country":"GEO","payout_usd":29509.91,"n_payouts":18},{"country":"LTU","payout_usd":27685.92,"n_payouts":11},{"country":"ZAF","payout_usd":27026.95,"n_payouts":14},{"country":"AND","payout_usd":25141.15,"n_payouts":11},{"country":"EGY","payout_usd":24073.62,"n_payouts":23},{"country":"NOR","payout_usd":23157.8,"n_payouts":9},{"country":"TUN","payout_usd":22987.53,"n_payouts":10},{"country":"DZA","payout_usd":21908.92,"n_payouts":11},{"country":"HKG","payout_usd":16364.09,"n_payouts":8},{"country":"HUN","payout_usd":16231.15,"n_payouts":8},{"country":"NZL","payout_usd":15292.81,"n_payouts":5},{"country":"IRL","payout_usd":15230.68,"n_payouts":7},{"country":"UGA","payout_usd":15035.22,"n_payouts":14},{"country":"FIN","payout_usd":14359.42,"n_payouts":10},{"country":"JOR","payout_usd":14288.78,"n_payouts":3},{"country":"XKK","payout_usd":14183.34,"n_payouts":7},{"country":"EST","payout_usd":13060.53,"n_payouts":3},{"country":"SVN","payout_usd":11881.44,"n_payouts":6},{"country":"IRN","payout_usd":11266.17,"n_payouts":15},{"country":"COL","payout_usd":11090.3,"n_payouts":8},{"country":"GRC","payout_usd":9676.3,"n_payouts":11},{"country":"AZE","payout_usd":7089.67,"n_payouts":2},{"country":"PER","payout_usd":6591.14,"n_payouts":29},{"country":"PRI","payout_usd":5446.99,"n_payouts":1},{"country":"BLR","payout_usd":5317.83,"n_payouts":5},{"country":"ZWE","payout_usd":4086.28,"n_payouts":2},{"country":"MMR","payout_usd":3852.67,"n_payouts":4},{"country":"SRB","payout_usd":3774.71,"n_payouts":11},{"country":"QAT","payout_usd":3140.07,"n_payouts":3},{"country":"MDA","payout_usd":3109.26,"n_payouts":8},{"country":"PRY","payout_usd":2968.57,"n_payouts":1},{"country":"LKA","payout_usd":2528.78,"n_payouts":3},{"country":"ALB","payout_usd":1923.74,"n_payouts":1},{"country":"BEN","payout_usd":1867.93,"n_payouts":3},{"country":"LBN","payout_usd":1805.02,"n_payouts":1},{"country":"TGO","payout_usd":1652.99,"n_payouts":1},{"country":"BDI","payout_usd":982.92,"n_payouts":1},{"country":"NPL","payout_usd":875.24,"n_payouts":8},{"country":"KHM","payout_usd":722.94,"n_payouts":1},{"country":"SEN","payout_usd":658.67,"n_payouts":1},{"country":"LVA","payout_usd":571.57,"n_payouts":1},{"country":"LUX","payout_usd":540.85,"n_payouts":2},{"country":"ETH","payout_usd":322.34,"n_payouts":2},{"country":"PLW","payout_usd":276.27,"n_payouts":1},{"country":"VEN","payout_usd":267.9,"n_payouts":1},{"country":"MKD","payout_usd":186.9,"n_payouts":1},{"country":"GTM","payout_usd":133.4,"n_payouts":1},{"country":"SDN","payout_usd":50.89,"n_payouts":1}],"account_sizes":[{"size":100000,"revenue_eur":6625611.57,"n_orders":14604},{"size":200000,"revenue_eur":5906570.83,"n_orders":6265},{"size":50000,"revenue_eur":2338123.47,"n_orders":8736},{"size":10000,"revenue_eur":1100161.71,"n_orders":13044},{"size":25000,"revenue_eur":872118.45,"n_orders":4898},{"size":5000,"revenue_eur":376518.99,"n_orders":7333},{"size":160000,"revenue_eur":94324.42,"n_orders":82},{"size":80000,"revenue_eur":32171.25,"n_orders":65},{"size":20000,"revenue_eur":27366.06,"n_orders":139},{"size":40000,"revenue_eur":17258.01,"n_orders":62},{"size":70000,"revenue_eur":9713.01,"n_orders":20},{"size":140000,"revenue_eur":9408.03,"n_orders":9},{"size":35000,"revenue_eur":6589.97,"n_orders":26}],"attr_totals":{"PURCHASE":{"count":5323,"amount_usd":11085403.33},"ADMIN":{"count":558,"amount_usd":674858.4},"MIGRATION":{"count":173,"amount_usd":203136.29},"GIVEAWAY":{"count":62,"amount_usd":15832.24},"FREE_PARTNER":{"count":6,"amount_usd":7070.52},"FREE_CHALLENGE_VOUCHER":{"count":5,"amount_usd":1445.53}},"reason_labels":{"PURCHASE":"Direct Purchase","ADMIN":"Admin","MIGRATION":"Migration","GIVEAWAY":"Giveaway","FREE_PARTNER":"Free Partner","FREE_CHALLENGE_VOUCHER":"Free Voucher"},"payout_timeline":[{"month":"2024-02","payouts_usd":237455.31,"n_payouts":93,"attribution":{"PURCHASE":{"count":61,"amount_usd":185404.04},"ADMIN":{"count":8,"amount_usd":22942.58},"MIGRATION":{"count":24,"amount_usd":29108.69},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-03","payouts_usd":594026.21,"n_payouts":253,"attribution":{"PURCHASE":{"count":190,"amount_usd":512822.54},"ADMIN":{"count":23,"amount_usd":48007.85},"MIGRATION":{"count":40,"amount_usd":33195.82},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-04","payouts_usd":478349.42,"n_payouts":264,"attribution":{"PURCHASE":{"count":208,"amount_usd":418018.44},"ADMIN":{"count":27,"amount_usd":41808.99},"MIGRATION":{"count":29,"amount_usd":18521.98},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-05","payouts_usd":380760.49,"n_payouts":205,"attribution":{"PURCHASE":{"count":161,"amount_usd":310321.14},"ADMIN":{"count":24,"amount_usd":57303.5},"MIGRATION":{"count":19,"amount_usd":12609.62},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":526.23}}},{"month":"2024-06","payouts_usd":356016.54,"n_payouts":212,"attribution":{"PURCHASE":{"count":178,"amount_usd":326127.54},"ADMIN":{"count":20,"amount_usd":19886.15},"MIGRATION":{"count":13,"amount_usd":9681.57},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":321.27}}},{"month":"2024-07","payouts_usd":323355.67,"n_payouts":178,"attribution":{"PURCHASE":{"count":157,"amount_usd":301041.59},"ADMIN":{"count":15,"amount_usd":18425.42},"MIGRATION":{"count":6,"amount_usd":3888.67},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-08","payouts_usd":278570.33,"n_payouts":155,"attribution":{"PURCHASE":{"count":124,"amount_usd":250788.16},"ADMIN":{"count":21,"amount_usd":17693.79},"MIGRATION":{"count":10,"amount_usd":10088.38},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-09","payouts_usd":296578.62,"n_payouts":157,"attribution":{"PURCHASE":{"count":127,"amount_usd":260995.05},"ADMIN":{"count":21,"amount_usd":14049.36},"MIGRATION":{"count":9,"amount_usd":21534.21},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-10","payouts_usd":322393.81,"n_payouts":164,"attribution":{"PURCHASE":{"count":135,"amount_usd":272062.74},"ADMIN":{"count":25,"amount_usd":39479.21},"MIGRATION":{"count":4,"amount_usd":10851.86},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-11","payouts_usd":371303.4,"n_payouts":185,"attribution":{"PURCHASE":{"count":155,"amount_usd":343446.96},"ADMIN":{"count":28,"amount_usd":27299.61},"MIGRATION":{"count":2,"amount_usd":556.83},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2024-12","payouts_usd":463423.23,"n_payouts":241,"attribution":{"PURCHASE":{"count":206,"amount_usd":362621.23},"ADMIN":{"count":30,"amount_usd":52202.52},"MIGRATION":{"count":5,"amount_usd":48599.47},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-01","payouts_usd":416748.86,"n_payouts":255,"attribution":{"PURCHASE":{"count":205,"amount_usd":383193.4},"ADMIN":{"count":45,"amount_usd":32645.06},"MIGRATION":{"count":3,"amount_usd":465.97},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":2,"amount_usd":444.43}}},{"month":"2025-02","payouts_usd":384115.16,"n_payouts":200,"attribution":{"PURCHASE":{"count":165,"amount_usd":348165.57},"ADMIN":{"count":32,"amount_usd":34199.89},"MIGRATION":{"count":2,"amount_usd":1596.1},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":1,"amount_usd":153.6}}},{"month":"2025-03","payouts_usd":300403.82,"n_payouts":197,"attribution":{"PURCHASE":{"count":155,"amount_usd":265399.73},"ADMIN":{"count":40,"amount_usd":34179.73},"MIGRATION":{"count":2,"amount_usd":824.36},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-04","payouts_usd":394875.03,"n_payouts":201,"attribution":{"PURCHASE":{"count":171,"amount_usd":366821.31},"ADMIN":{"count":30,"amount_usd":28053.72},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-05","payouts_usd":425550.13,"n_payouts":217,"attribution":{"PURCHASE":{"count":187,"amount_usd":394137.39},"ADMIN":{"count":30,"amount_usd":31412.74},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-06","payouts_usd":492252.41,"n_payouts":175,"attribution":{"PURCHASE":{"count":159,"amount_usd":474456.48},"ADMIN":{"count":16,"amount_usd":17795.93},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-07","payouts_usd":486269.29,"n_payouts":226,"attribution":{"PURCHASE":{"count":205,"amount_usd":456012.53},"ADMIN":{"count":19,"amount_usd":29556.25},"MIGRATION":{"count":2,"amount_usd":700.5},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-08","payouts_usd":532813.8,"n_payouts":298,"attribution":{"PURCHASE":{"count":278,"amount_usd":515037.77},"ADMIN":{"count":18,"amount_usd":16137.88},"MIGRATION":{"count":1,"amount_usd":167.2},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":1,"amount_usd":1470.95},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-09","payouts_usd":547870.71,"n_payouts":255,"attribution":{"PURCHASE":{"count":229,"amount_usd":520346.01},"ADMIN":{"count":17,"amount_usd":20353.22},"MIGRATION":{"count":1,"amount_usd":327.19},"GIVEAWAY":{"count":5,"amount_usd":2743.2},"FREE_PARTNER":{"count":3,"amount_usd":4101.09},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-10","payouts_usd":595994.24,"n_payouts":294,"attribution":{"PURCHASE":{"count":279,"amount_usd":581286.84},"ADMIN":{"count":14,"amount_usd":14289.52},"MIGRATION":{"count":1,"amount_usd":417.87},"GIVEAWAY":{"count":0,"amount_usd":0.0},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-11","payouts_usd":704018.62,"n_payouts":345,"attribution":{"PURCHASE":{"count":321,"amount_usd":690893.12},"ADMIN":{"count":10,"amount_usd":7883.17},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":12,"amount_usd":3743.85},"FREE_PARTNER":{"count":2,"amount_usd":1498.48},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2025-12","payouts_usd":719474.63,"n_payouts":356,"attribution":{"PURCHASE":{"count":336,"amount_usd":707123.14},"ADMIN":{"count":10,"amount_usd":11036.6},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":10,"amount_usd":1314.89},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2026-01","payouts_usd":742232.39,"n_payouts":411,"attribution":{"PURCHASE":{"count":387,"amount_usd":729647.84},"ADMIN":{"count":11,"amount_usd":10422.21},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":13,"amount_usd":2162.33},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2026-02","payouts_usd":666002.07,"n_payouts":353,"attribution":{"PURCHASE":{"count":325,"amount_usd":647448.2},"ADMIN":{"count":14,"amount_usd":14045.67},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":14,"amount_usd":4508.2},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}},{"month":"2026-03","payouts_usd":476892.16,"n_payouts":237,"attribution":{"PURCHASE":{"count":219,"amount_usd":461784.55},"ADMIN":{"count":10,"amount_usd":13747.83},"MIGRATION":{"count":0,"amount_usd":0.0},"GIVEAWAY":{"count":8,"amount_usd":1359.77},"FREE_PARTNER":{"count":0,"amount_usd":0.0},"FREE_CHALLENGE_VOUCHER":{"count":0,"amount_usd":0.0}}}],"unattributed_by_reason":[{"reason":"ADMIN","label":"Admin","count":558,"amount":674858.4},{"reason":"MIGRATION","label":"Migration","count":173,"amount":203136.29},{"reason":"GIVEAWAY","label":"Giveaway","count":62,"amount":15832.24},{"reason":"FREE_PARTNER","label":"Free Partner","count":6,"amount":7070.52},{"reason":"FREE_CHALLENGE_VOUCHER","label":"Free Voucher","count":5,"amount":1445.53}],"unattributed_monthly":[{"payout_ym":"2024-02","amount":52051.27,"count":32},{"payout_ym":"2024-03","amount":81203.67,"count":63},{"payout_ym":"2024-04","amount":60330.97,"count":56},{"payout_ym":"2024-05","amount":70439.35,"count":44},{"payout_ym":"2024-06","amount":29888.99,"count":34},{"payout_ym":"2024-07","amount":22314.09,"count":21},{"payout_ym":"2024-08","amount":27782.17,"count":31},{"payout_ym":"2024-09","amount":35583.57,"count":30},{"payout_ym":"2024-10","amount":50331.07,"count":29},{"payout_ym":"2024-11","amount":27856.44,"count":30},{"payout_ym":"2024-12","amount":100801.99,"count":35},{"payout_ym":"2025-01","amount":33555.46,"count":50},{"payout_ym":"2025-02","amount":35949.59,"count":35},{"payout_ym":"2025-03","amount":35004.09,"count":42},{"payout_ym":"2025-04","amount":28053.72,"count":30},{"payout_ym":"2025-05","amount":31412.74,"count":30},{"payout_ym":"2025-06","amount":17795.93,"count":16},{"payout_ym":"2025-07","amount":30256.75,"count":21},{"payout_ym":"2025-08","amount":17776.03,"count":20},{"payout_ym":"2025-09","amount":27524.7,"count":26},{"payout_ym":"2025-10","amount":14707.39,"count":15},{"payout_ym":"2025-11","amount":13125.5,"count":24},{"payout_ym":"2025-12","amount":12351.49,"count":20},{"payout_ym":"2026-01","amount":12584.54,"count":24},{"payout_ym":"2026-02","amount":18553.87,"count":28},{"payout_ym":"2026-03","amount":15107.6,"count":18}]};
+
+// Live FX (EUR/USD only)
+let LFX = { EU: (D.hist_eur_usd['2026-03']||1.084), live: false };
+
+// OpEx rate (adjustable via input)
+let OPEX_RATE = 0.25;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════════
+const fmtM = (n, pre='$') => {
+  if(n===null||n===undefined||isNaN(n)) return '&mdash;';
+  const a=Math.abs(n);
+  const neg=n<0?'-':'';
+  let s = a>=1e6 ? (a/1e6).toFixed(1)+'M' : a>=1e3 ? (a/1e3).toFixed(0)+'K' : a.toFixed(0);
+  return neg+pre+s;
+};
+const fmtF = (n, pre='$') => {
+  if(n===null||n===undefined||isNaN(n)) return '&mdash;';
+  const neg=n<0?'-':'';
+  return neg+pre+Math.round(Math.abs(n)).toLocaleString('en-US');
+};
+const fmtP = (n,d=1) => n===null||isNaN(n) ? '&mdash;' : n.toFixed(d)+'%';
+const pc   = n => n >= 15 ? 'pill-g' : n >= 0 ? 'pill-a' : 'pill-r';
+const matBadge = p => p>=70 ? '<span class="badge bdg-g">Mature</span>' :
+                       p>=40 ? '<span class="badge bdg-b">Maturing</span>' :
+                       p>=15 ? '<span class="badge bdg-a">Young</span>'   :
+                               '<span class="badge bdg-p">New</span>';
+
+Chart.defaults.font.family = "'Inter',system-ui,sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#64748b';
+
+// ══════════════════════════════════════════════════════════════════════════════
+// OPEX CONTROL
+// ══════════════════════════════════════════════════════════════════════════════
+function updateOpEx(val) {
+  const v = parseFloat(val);
+  if(isNaN(v)||v<0||v>100) return;
+  OPEX_RATE = v / 100;
+  // Update header label
+  const hdr = document.getElementById('opexPctHeader');
+  if(hdr) hdr.textContent = v.toFixed(1);
+  // Update KPI Net Margin
+  const selVal = document.getElementById('cohortSelector').value;
+  if(selVal === 'all') {
+    const netPct = (D.summary.total_revenue_usd - D.summary.total_payouts_usd - D.summary.total_ibnr_usd - D.summary.total_revenue_usd * OPEX_RATE) / D.summary.total_revenue_usd * 100;
+    document.getElementById('kNetM').textContent = fmtP(netPct);
+    document.getElementById('kNetM').style.color = netPct>=10?'var(--green)':netPct>=0?'var(--amber)':'var(--red)';
+    document.getElementById('kNetMsub').textContent = 'After payouts + '+v.toFixed(0)+'% opex';
+  } else {
+    const c = D.cohorts.find(x=>x.cohort_ym===selVal);
+    if(c) {
+      const netPct = c.revenue_usd_net>0 ? (c.revenue_usd_net - c.projected_cost_usd - c.revenue_usd_net*OPEX_RATE) / c.revenue_usd_net * 100 : 0;
+      document.getElementById('kNetM').textContent = fmtP(netPct);
+      document.getElementById('kNetM').style.color = netPct>=10?'var(--green)':netPct>=0?'var(--amber)':'var(--red)';
+      document.getElementById('kNetMsub').textContent = 'After payouts + '+v.toFixed(0)+'% opex';
+    }
+  }
+  // Re-render cohort table if visible
+  if(rendered['cohorts']) renderCohortTbl();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COHORT SELECTOR + KPI
+// ══════════════════════════════════════════════════════════════════════════════
+function buildCohortSelector() {
+  const sel = document.getElementById('cohortSelector');
+  D.cohorts.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.cohort_ym;
+    o.textContent = c.cohort_ym + '  ·  ' + c.n_orders.toLocaleString() + ' orders  ·  ' + fmtM(c.revenue_usd_net) + ' revenue';
+    sel.appendChild(o);
+  });
+}
+
+function applyCohortFilter() {
+  const v = document.getElementById('cohortSelector').value;
+  if(v === 'all') {
+    updateKPIs(D.summary, null);
+    document.getElementById('selectorHint').textContent = 'Showing portfolio-level totals · Select a cohort month to drill down';
+    renderRemainingSchedule(null);
+  } else {
+    const c = D.cohorts.find(x => x.cohort_ym === v);
+    if(!c) return;
+    updateKPIs(null, c);
+    document.getElementById('selectorHint').textContent =
+      'Showing cohort ' + v + ' · FX used: EUR/USD ' + c.fx_eur_used.toFixed(4) + ' · ' + c.age_months + ' months old';
+    if(rendered['cohorts']) renderRemainingSchedule(c);
+  }
+}
+
+function updateKPIs(s, c) {
+  if(s) {
+    document.getElementById('kRevenue').textContent   = fmtM(s.total_revenue_usd);
+    document.getElementById('kRevenueSub').innerHTML  = '<b>' + D.cohorts.length + ' cohorts</b> · 2023-12 – 2026-03';
+    document.getElementById('kPayouts').textContent   = fmtM(s.total_payouts_usd);
+    document.getElementById('kPayoutsSub').innerHTML  = '<b>' + s.n_payouts_total.toLocaleString() + '</b> transactions';
+    document.getElementById('kRealM').textContent     = fmtP(s.realized_margin_pct);
+    document.getElementById('kRealM').style.color     = s.realized_margin_pct>=20?'var(--green)':s.realized_margin_pct>=8?'var(--amber)':'var(--red)';
+    document.getElementById('kProjM').textContent     = fmtP(s.projected_margin_pct);
+    document.getElementById('kProjM').style.color     = s.projected_margin_pct>=20?'var(--green)':s.projected_margin_pct>=8?'var(--amber)':'var(--red)';
+    document.getElementById('kIBNR').textContent      = fmtM(s.total_ibnr_usd);
+    document.getElementById('kIBNRsub').textContent   = 'Estimated future liability';
+    const netPct = (s.total_revenue_usd - s.total_payouts_usd - s.total_ibnr_usd - s.total_revenue_usd*OPEX_RATE) / s.total_revenue_usd * 100;
+    document.getElementById('kNetM').textContent      = fmtP(netPct);
+    document.getElementById('kNetM').style.color      = netPct>=10?'var(--green)':netPct>=0?'var(--amber)':'var(--red)';
+    document.getElementById('kOrders').textContent    = s.n_orders_total.toLocaleString();
+    document.getElementById('kOrdersSub').innerHTML   = '<b>' + D.cohorts.length + '</b> cohort months · <b>166</b> countries';
+  } else {
+    document.getElementById('kRevenue').textContent   = fmtM(c.revenue_usd_net);
+    document.getElementById('kRevenueSub').innerHTML  = fmtF(c.n_orders) + ' orders · FX ' + c.fx_eur_used.toFixed(4);
+    document.getElementById('kPayouts').textContent   = fmtM(c.payouts_usd);
+    document.getElementById('kPayoutsSub').innerHTML  = '<b>' + c.n_payouts + '</b> payout transactions';
+    document.getElementById('kRealM').textContent     = fmtP(c.realized_margin_pct);
+    document.getElementById('kRealM').style.color     = c.realized_margin_pct>=20?'var(--green)':c.realized_margin_pct>=8?'var(--amber)':'var(--red)';
+    document.getElementById('kProjM').textContent     = fmtP(c.projected_margin_pct);
+    document.getElementById('kProjM').style.color     = c.projected_margin_pct>=20?'var(--green)':c.projected_margin_pct>=8?'var(--amber)':'var(--red)';
+    document.getElementById('kIBNR').textContent      = fmtM(c.ibnr_usd);
+    document.getElementById('kIBNRsub').textContent   = c.maturity_pct.toFixed(0)+'% mature — '+(c.maturity_pct>=70?'reliable estimate':c.maturity_pct>=40?'moderate confidence':'early estimate');
+    const netPct = c.revenue_usd_net>0 ? (c.revenue_usd_net - c.projected_cost_usd - c.revenue_usd_net*OPEX_RATE) / c.revenue_usd_net * 100 : 0;
+    document.getElementById('kNetM').textContent      = fmtP(netPct);
+    document.getElementById('kNetM').style.color      = netPct>=10?'var(--green)':netPct>=0?'var(--amber)':'var(--red)';
+    document.getElementById('kNetMsub').textContent   = 'After payouts + '+Math.round(OPEX_RATE*100)+'% opex';
+    document.getElementById('kOrders').textContent    = c.n_orders.toLocaleString();
+    document.getElementById('kOrdersSub').innerHTML   = c.age_months + ' months old · ' + c.n_refunds + ' refunds';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════════════════════
+const rendered = {};
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(!rendered[id]) { renderTab(id); rendered[id]=true; }
+}
+function renderTab(id) {
+  if(id==='cohorts')     renderCohortTbl();
+  if(id==='projections') renderProjections();
+  if(id==='curve')       renderCurve();
+  if(id==='geo')         renderGeo();
+  if(id==='sizes')       renderSizes();
+  if(id==='attr')        renderAttr();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// OVERVIEW CHARTS
+// ══════════════════════════════════════════════════════════════════════════════
+function initOverview() {
+  const months  = D.cohorts.map(c=>c.cohort_ym);
+  const revUsd  = D.cohorts.map(c=>c.revenue_usd_net);
+  const payUsd  = D.cohorts.map(c=>c.payouts_usd);
+
+  new Chart(document.getElementById('chRevenue').getContext('2d'), {
+    type:'bar',
+    data:{ labels:months, datasets:[{ label:'Net Revenue (USD)', data:revUsd, backgroundColor:'#2563eb22', borderColor:'#2563eb', borderWidth:1.5, borderRadius:4 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>'$'+Math.round(c.parsed.y).toLocaleString()}} },
+      scales:{ x:{grid:{display:false}, ticks:{maxTicksLimit:8}}, y:{grid:{color:'#f1f5f9'}, ticks:{callback:v=>fmtM(v)}} }
+    }
+  });
+
+  const payM = D.monthly_payouts_usd.map(p=>p.month);
+  const payV = D.monthly_payouts_usd.map(p=>p.payouts_usd);
+  new Chart(document.getElementById('chPayouts').getContext('2d'), {
+    type:'bar',
+    data:{ labels:payM, datasets:[{ label:'Payouts Paid (USD)', data:payV, backgroundColor:'#dc262622', borderColor:'#dc2626', borderWidth:1.5, borderRadius:4 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>'$'+Math.round(c.parsed.y).toLocaleString()}} },
+      scales:{ x:{grid:{display:false}, ticks:{maxTicksLimit:8}}, y:{grid:{color:'#f1f5f9'}, ticks:{callback:v=>fmtM(v)}} }
+    }
+  });
+
+  new Chart(document.getElementById('chOverview').getContext('2d'), {
+    type:'bar',
+    data:{ labels:months, datasets:[
+      { label:'Revenue (USD)', data:revUsd, backgroundColor:'#2563eb22', borderColor:'#2563eb', borderWidth:1.5, borderRadius:3, order:2 },
+      { type:'line', label:'Realized Payouts (USD)', data:payUsd, borderColor:'#dc2626', backgroundColor:'transparent', borderWidth:2, pointRadius:3, pointBackgroundColor:'#dc2626', tension:.3, order:1 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'top', align:'end', labels:{boxWidth:12, padding:10}}, tooltip:{mode:'index', callbacks:{label:c=>'$'+Math.round(c.parsed.y).toLocaleString()+' — '+c.dataset.label}} },
+      scales:{ x:{grid:{display:false}, ticks:{maxTicksLimit:10}}, y:{grid:{color:'#f1f5f9'}, ticks:{callback:v=>fmtM(v)}} }
+    }
+  });
+
+  const s = D.summary;
+  const totalGross = D.cohorts.reduce((a,c)=>a+c.revenue_usd_gross,0);
+  const totalRefunds = totalGross - s.total_revenue_usd;
+  document.getElementById('summaryPanel').innerHTML = `
+    <div class="stat-r"><span class="stat-k">Gross Revenue</span><span class="stat-v">${fmtF(totalGross)}</span></div>
+    <div class="stat-r"><span class="stat-k">Total Refunds</span><span class="stat-v" style="color:var(--red)">(${fmtF(totalRefunds)})</span></div>
+    <div class="stat-r"><span class="stat-k">Net Revenue</span><span class="stat-v">${fmtF(s.total_revenue_usd)}</span></div>
+    <div class="stat-r"><span class="stat-k">Realized Payouts</span><span class="stat-v">${fmtF(s.total_payouts_usd)}</span></div>
+    <div class="stat-r"><span class="stat-k">IBNR Reserve</span><span class="stat-v" style="color:var(--amber)">${fmtF(s.total_ibnr_usd)}</span></div>
+    <div class="stat-r"><span class="stat-k">Total Projected Cost</span><span class="stat-v">${fmtF(s.total_projected_cost_usd)}</span></div>
+    <div class="stat-r"><span class="stat-k" style="font-weight:700">Projected Gross Margin</span><span class="stat-v" style="color:var(--purple);font-size:16px">${fmtP(s.projected_margin_pct)}</span></div>
+    <div class="stat-r"><span class="stat-k">Realized Margin (today)</span><span class="stat-v">${fmtP(s.realized_margin_pct)}</span></div>
+    <div class="stat-r"><span class="stat-k">Expected payout rate</span><span class="stat-v">${s.expected_payout_pct}%</span></div>
+    <div class="stat-r"><span class="stat-k">Total orders</span><span class="stat-v">${s.n_orders_total.toLocaleString()}</span></div>
+    <div class="stat-r"><span class="stat-k">Payout transactions</span><span class="stat-v">${s.n_payouts_total.toLocaleString()}</span></div>
+    <div class="stat-r"><span class="stat-k">Refunds</span><span class="stat-v" style="color:var(--red)">${s.n_refunds_total}</span></div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COHORT TABLE
+// ══════════════════════════════════════════════════════════════════════════════
+let tblSort = {k:'cohort_ym', asc:false};
+function sortTbl(k) {
+  if(tblSort.k===k) tblSort.asc=!tblSort.asc; else { tblSort.k=k; tblSort.asc=false; }
+  renderCohortTbl();
+}
+
+function getRowNetMargin(r) {
+  if(r.revenue_usd_net <= 0) return 0;
+  return (r.revenue_usd_net - r.projected_cost_usd - r.revenue_usd_net * OPEX_RATE) / r.revenue_usd_net * 100;
+}
+
+function renderCohortTbl() {
+  const f = document.getElementById('cohortTblFilter').value;
+  let rows = [...D.cohorts];
+  if(f==='mature') rows=rows.filter(r=>r.maturity_pct>=70);
+  if(f==='y2025')  rows=rows.filter(r=>r.cohort_ym>='2025-01');
+  if(f==='y2026')  rows=rows.filter(r=>r.cohort_ym>='2026-01');
+
+  // Add computed fields for sorting
+  rows = rows.map(r => ({ ...r, _net_margin: getRowNetMargin(r), _opex_pct: OPEX_RATE * 100 }));
+
+  rows.sort((a,b) => {
+    const av=a[tblSort.k], bv=b[tblSort.k], m=tblSort.asc?1:-1;
+    return typeof av==='string'?av.localeCompare(bv)*m:(av-bv)*m;
+  });
+  document.querySelectorAll('[id^="si_"]').forEach(e=>{e.textContent='↕';e.classList.remove('on')});
+  const si=document.getElementById('si_'+tblSort.k);
+  if(si){si.textContent=tblSort.asc?'↑':'↓';si.classList.add('on');}
+
+  document.getElementById('cohortTbody').innerHTML = rows.map(r => {
+    const netM = getRowNetMargin(r);
+    const opexAmt = r.revenue_usd_net * OPEX_RATE;
+    return `<tr>
+      <td><div style="font-weight:700;font-size:13px">${r.cohort_ym}</div><div style="font-size:10px;color:var(--txt3)">FX ${r.fx_eur_used.toFixed(4)}</div></td>
+      <td style="color:var(--txt2)">${r.age_months}m</td>
+      <td>${r.n_orders.toLocaleString()}</td>
+      <td style="font-weight:700">${fmtF(r.revenue_usd_net)}</td>
+      <td>${fmtF(r.payouts_usd)}</td>
+      <td style="color:var(--amber)">${r.ibnr_usd>500?fmtF(r.ibnr_usd):'<span style="color:var(--txt3)">—</span>'}</td>
+      <td style="font-weight:600">${fmtF(r.projected_cost_usd)}</td>
+      <td><span class="pill ${pc(r.realized_margin_pct)}">${fmtP(r.realized_margin_pct)}</span></td>
+      <td><span class="pill ${pc(r.projected_margin_pct)}">${fmtP(r.projected_margin_pct)}</span></td>
+      <td style="color:var(--txt2);font-size:12px">${fmtF(opexAmt)}</td>
+      <td><span class="pill ${pc(netM)}">${fmtP(netM)}</span></td>
+      <td>${matBadge(r.maturity_pct)} <span style="font-size:10.5px;color:var(--txt3);margin-left:3px">${r.maturity_pct.toFixed(0)}%</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REMAINING PAYOUT SCHEDULE (per cohort, M+next to M+24)
+// ══════════════════════════════════════════════════════════════════════════════
+let remainingSchedChart = null;
+function renderRemainingSchedule(c) {
+  const card = document.getElementById('remainingSchedCard');
+  if (!c || c.age_months >= 24) { card.style.display='none'; return; }
+  card.style.display = 'block';
+  const CM = D.payout_curve_monthly_pct;
+  const labels=[], vals=[], bgs=[], borders=[];
+  for (let lag = c.age_months+1; lag <= 24; lag++) {
+    const amt = c.revenue_usd_net * CM[lag];
+    labels.push('M+'+lag);
+    vals.push(Math.round(amt));
+    const col = amt>50000?'#dc2626':amt>20000?'#d97706':amt>5000?'#2563eb':'#94a3b8';
+    bgs.push(col+'44'); borders.push(col);
+  }
+  const totalRem = vals.reduce((a,v)=>a+v,0);
+  const remPct   = c.revenue_usd_net>0 ? totalRem/c.revenue_usd_net*100 : 0;
+  const peakIdx  = vals.indexOf(Math.max(...vals));
+  const peakM    = labels[peakIdx]||'—';
+  const tailLeft = 24 - c.age_months;
+  document.getElementById('remainingSchedTitle').textContent =
+    'Expected Remaining Payout Schedule — '+c.cohort_ym+' (currently M+'+c.age_months+')';
+  document.getElementById('remainingSchedSub').textContent =
+    'M+'+(c.age_months+1)+' to M+24 · '+tailLeft+' months remaining · historical payout curve · tail-adjusted IBNR';
+  document.getElementById('remainingSchedStats').innerHTML =
+    '<div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--teal)">$'+totalRem.toLocaleString()+'</div><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;margin-top:2px">Total remaining expected</div></div>'+
+    '<div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--blue)">'+remPct.toFixed(1)+'%</div><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;margin-top:2px">% of cohort revenue</div></div>'+
+    '<div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--amber)">'+peakM+'</div><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;margin-top:2px">Peak remaining month</div></div>'+
+    '<div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--green)">'+tailLeft+'</div><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;margin-top:2px">Tail months left</div></div>';
+  if (remainingSchedChart) remainingSchedChart.destroy();
+  remainingSchedChart = new Chart(document.getElementById('chRemainingSchedule').getContext('2d'), {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Expected Payout', data:vals, backgroundColor:bgs, borderColor:borders, borderWidth:1.5, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>'$'+ctx.parsed.y.toLocaleString()+' at '+ctx.label+' ('+( ctx.parsed.y/c.revenue_usd_net*100).toFixed(2)+'% of revenue)'}} },
+      scales:{ x:{grid:{display:false},title:{display:true,text:'M-offset from original order month',font:{size:10},color:'#94a3b8'}}, y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>fmtM(v)}} }
+    }
+  });
+}
+
+function exportCSV() {
+  const h = ['Month','Age_Months','Orders','Revenue_USD','FX_Used','Payouts_USD','IBNR_USD','Proj_Cost_USD','Realized_Margin_Pct','Projected_Margin_Pct','OpEx_USD','Net_Margin_Pct','Maturity_Pct'];
+  const rows = D.cohorts.map(r => {
+    const netM = getRowNetMargin(r);
+    return [r.cohort_ym,r.age_months,r.n_orders,r.revenue_usd_net.toFixed(0),r.fx_eur_used.toFixed(4),r.payouts_usd.toFixed(0),r.ibnr_usd.toFixed(0),r.projected_cost_usd.toFixed(0),r.realized_margin_pct.toFixed(2),r.projected_margin_pct.toFixed(2),(r.revenue_usd_net*OPEX_RATE).toFixed(0),netM.toFixed(2),r.maturity_pct.toFixed(1)].join(',');
+  });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([[h.join(','),...rows].join('\n')],{type:'text/csv'}));
+  a.download='brightfunded_cohort_margins.csv'; a.click();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FUTURE PROJECTIONS (computed from payout curve)
+// ══════════════════════════════════════════════════════════════════════════════
+function computeFutureProjections() {
+  const CM = D.payout_curve_monthly_pct;
+  // Parse today from generated_at
+  const genYm = D.generated_at.substring(0,7);
+  const [ty, tm] = genYm.split('-').map(Number);
+  const fp = [];
+  for(let i=1; i<=30; i++) {
+    const totalMs = ty*12 + (tm-1) + i;
+    const futY = Math.floor(totalMs/12);
+    const futM = (totalMs % 12) + 1;
+    const calYm = futY+'-'+String(futM).padStart(2,'0');
+    let expected = 0, nContrib = 0;
+    const contribs = [];
+    D.cohorts.forEach(c => {
+      const [cy, cm] = c.cohort_ym.split('-').map(Number);
+      const lag = (futY - cy)*12 + (futM - cm);
+      if(lag >= 0 && lag < CM.length) {
+        const contrib = c.revenue_usd_net * CM[lag];
+        if(contrib > 0.01) { expected += contrib; nContrib++; contribs.push({cohort:c.cohort_ym, amount:contrib}); }
+      }
+    });
+    contribs.sort((a,b)=>b.amount-a.amount);
+    fp.push({ calendar_ym:calYm, expected_payout_usd:Math.max(0,expected), n_cohorts_contributing:nContrib, top_contributors:contribs.slice(0,3) });
+  }
+  return fp;
+}
+
+function renderProjections() {
+  const fp = computeFutureProjections();
+  const labels = fp.map(m=>m.calendar_ym);
+  const vals   = fp.map(m=>m.expected_payout_usd);
+  const maxV   = Math.max(...vals);
+  const colors = vals.map(v => v>400000?'#dc2626':v>200000?'#d97706':v>80000?'#2563eb':'#94a3b8');
+
+  new Chart(document.getElementById('chFuture').getContext('2d'), {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Expected Payout (USD)', data:vals, backgroundColor:colors.map(c=>c+'55'), borderColor:colors, borderWidth:1.5, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>'$'+Math.round(c.parsed.y).toLocaleString()+' expected payout'}} },
+      scales:{ x:{grid:{display:false}, ticks:{maxTicksLimit:15}}, y:{grid:{color:'#f1f5f9'}, ticks:{callback:v=>fmtM(v)}} }
+    }
+  });
+
+  const s3  = vals.slice(0,3).reduce((a,v)=>a+v,0);
+  const s6  = vals.slice(0,6).reduce((a,v)=>a+v,0);
+  const s12 = vals.slice(0,12).reduce((a,v)=>a+v,0);
+  const sT  = vals.reduce((a,v)=>a+v,0);
+  const maxIdx = vals.indexOf(maxV);
+  document.getElementById('futNext3').textContent   = fmtF(s3);
+  document.getElementById('futNext6').textContent   = fmtF(s6);
+  document.getElementById('futNext12').textContent  = fmtF(s12);
+  document.getElementById('futTotal').textContent   = fmtF(sT);
+  document.getElementById('futLargest').textContent = labels[maxIdx]+' · '+fmtF(maxV);
+  const mostIdx = fp.reduce((mi,m,i,a)=>m.n_cohorts_contributing>a[mi].n_cohorts_contributing?i:mi,0);
+  document.getElementById('futMostCohorts').textContent = fp[mostIdx].calendar_ym;
+  document.getElementById('futIBNRTotal').textContent   = fmtF(D.summary.total_ibnr_usd);
+
+  const maxBar = vals[0]||1;
+  document.getElementById('projBars').innerHTML = fp.map((m,i) => {
+    const w = (m.expected_payout_usd / maxBar * 100).toFixed(1);
+    const col = m.expected_payout_usd>400000?'#dc2626':m.expected_payout_usd>200000?'#d97706':m.expected_payout_usd>80000?'#2563eb':'#94a3b8';
+    const isHi = i<3 ? 'style="font-weight:700;color:var(--txt)"' : '';
+    const top = m.top_contributors.slice(0,3).map(x=>'<span class="m-tag" style="font-size:9px">'+x.cohort+'</span>').join(' ');
+    return '<div class="proj-row"><div class="proj-month" '+isHi+'>'+m.calendar_ym+'</div><div class="proj-bar-wrap"><div class="proj-bar-fill" style="width:'+w+'%;background:'+col+'88">'+(m.expected_payout_usd>120000?'$'+Math.round(m.expected_payout_usd/1000)+'K':'')+'</div></div><div class="proj-val">'+fmtF(m.expected_payout_usd)+'</div><div class="proj-n">'+m.n_cohorts_contributing+' cohorts</div></div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PAYOUT CURVE
+// ══════════════════════════════════════════════════════════════════════════════
+function renderCurve() {
+  const CM = D.payout_curve_monthly_pct;
+  const CC = D.payout_curve_cumulative_pct;
+  const labels = CM.map((_,i)=>'M+'+i);
+
+  // Fill callouts
+  const expPay    = (CC[CC.length-1]*100).toFixed(2)+'%';
+  const expMargin = (100 - CC[CC.length-1]*100).toFixed(2)+'%';
+  const peakIdx   = CM.indexOf(Math.max(...CM));
+  document.getElementById('calloutExpPay').textContent    = expPay;
+  document.getElementById('calloutExpMargin').textContent = expMargin;
+  document.getElementById('calloutPeakM').textContent     = 'M+'+peakIdx;
+  document.getElementById('calloutPeakMlbl').textContent  = 'Peak payout month ('+(CM[peakIdx]*100).toFixed(1)+'% of revenue)';
+
+  // Milestones
+  const msMap = {0:0,1:1,2:2,3:3,5:5,11:11,17:17,24:24};
+  Object.entries(msMap).forEach(([k,v]) => {
+    const el = document.getElementById('ms'+k);
+    if(el && CC[v] !== undefined) el.textContent = fmtP(CC[v]*100);
+  });
+
+  new Chart(document.getElementById('chCurveM').getContext('2d'), {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'% of Revenue Paid', data:CM.map(v=>v*100), backgroundColor:'#2563eb33', borderColor:'#2563eb', borderWidth:1.5, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>fmtP(c.parsed.y,3)+' of revenue at this M-offset'}} },
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f1f5f9'}, ticks:{callback:v=>v.toFixed(1)+'%'}} }
+    }
+  });
+
+  new Chart(document.getElementById('chCurveC').getContext('2d'), {
+    type:'line',
+    data:{ labels, datasets:[{
+      label:'Cumulative % Paid', data:CC.map(v=>v*100),
+      borderColor:'#059669', backgroundColor:'#05966918', borderWidth:2.5,
+      fill:true, tension:.35, pointRadius:4, pointBackgroundColor:'#059669'
+    }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>fmtP(c.parsed.y,2)+' of lifetime revenue paid by '+c.label}} },
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f1f5f9'}, min:0, max:70, ticks:{callback:v=>v+'%'}} }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GEOGRAPHY
+// ══════════════════════════════════════════════════════════════════════════════
+function renderGeo() {
+  const revFactor = D.summary.total_revenue_usd / D.cohorts.reduce((a,c)=>a+c.revenue_eur_net,0);
+  const top20rev = D.countries.slice(0,20);
+  const top20pay = D.payout_by_country.slice(0,20);
+
+  new Chart(document.getElementById('chGeoRev').getContext('2d'), {
+    type:'bar',
+    data:{ labels:top20rev.map(c=>c.country), datasets:[{ label:'Revenue (USD)', data:top20rev.map(c=>c.revenue_eur*revFactor), backgroundColor:'#2563eb', borderRadius:3 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>'$'+Math.round(c.parsed.x).toLocaleString()}}}, scales:{x:{grid:{color:'#f1f5f9'}, ticks:{callback:v=>fmtM(v)}}, y:{grid:{display:false}}} }
+  });
+
+  new Chart(document.getElementById('chGeoPay').getContext('2d'), {
+    type:'bar',
+    data:{ labels:top20pay.map(c=>c.country), datasets:[{ label:'Payouts (USD)', data:top20pay.map(c=>c.payout_usd), backgroundColor:'#dc2626', borderRadius:3 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>'$'+Math.round(c.parsed.x).toLocaleString()}}}, scales:{x:{grid:{color:'#f1f5f9'}, ticks:{callback:v=>fmtM(v)}}, y:{grid:{display:false}}} }
+  });
+
+  const revMap = {};
+  D.countries.forEach(c=>revMap[c.country]=c.revenue_eur*revFactor);
+  const burden = D.payout_by_country
+    .filter(c=>revMap[c.country]&&revMap[c.country]>20000)
+    .map(c=>(({country:c.country, ratio:c.payout_usd/revMap[c.country]*100, pay:c.payout_usd, rev:revMap[c.country]})))
+    .sort((a,b)=>b.ratio-a.ratio).slice(0,15);
+  const mxR = Math.max(...burden.map(r=>r.ratio));
+  document.getElementById('geoBurden').innerHTML = burden.map(r => {
+    const w=(r.ratio/mxR*100).toFixed(1);
+    const col=r.ratio>80?'#dc2626':r.ratio>60?'#d97706':'#2563eb';
+    return '<div class="proj-row"><div class="proj-month" style="width:44px;font-size:12px">'+r.country+'</div><div class="proj-bar-wrap"><div class="proj-bar-fill" style="width:'+w+'%;background:'+col+'66;border-left:3px solid '+col+'">'+(r.ratio>50?fmtP(r.ratio,0):'')+'</div></div><div class="proj-val" style="color:'+col+'">'+fmtP(r.ratio,1)+'</div><div class="proj-n" style="width:160px">'+fmtM(r.pay)+' / '+fmtM(r.rev)+'</div></div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ACCOUNT SIZES
+// ══════════════════════════════════════════════════════════════════════════════
+function renderSizes() {
+  const revFactor = D.summary.total_revenue_usd / D.cohorts.reduce((a,c)=>a+c.revenue_eur_net,0);
+  const sz = D.account_sizes;
+  const labels = sz.map(s=>'$'+(s.size>=1000?s.size/1000+'K':s.size));
+  const COLORS = ['#2563eb','#3b82f6','#60a5fa','#7c3aed','#a855f7','#c084fc','#059669','#34d399','#d97706','#fbbf24','#dc2626','#f87171','#64748b'];
+  const totalRevEur = sz.reduce((a,s)=>a+s.revenue_eur,0);
+
+  new Chart(document.getElementById('chSizeRev').getContext('2d'), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:sz.map(s=>s.revenue_eur*revFactor), backgroundColor:COLORS, borderWidth:2, borderColor:'#fff', hoverBorderWidth:3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{ legend:{position:'right', labels:{boxWidth:10, padding:7, font:{size:11}}}, tooltip:{callbacks:{label:c=>c.label+': $'+Math.round(c.parsed).toLocaleString()}} }
+    }
+  });
+
+  new Chart(document.getElementById('chSizeOrd').getContext('2d'), {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Orders', data:sz.map(s=>s.n_orders), backgroundColor:COLORS, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>c.parsed.y.toLocaleString()+' orders'}}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'#f1f5f9'}}} }
+  });
+
+  new Chart(document.getElementById('chSizeAvg').getContext('2d'), {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Avg Revenue/Order', data:sz.map(s=>s.n_orders>0?s.revenue_eur*revFactor/s.n_orders:0), backgroundColor:'#05966933', borderColor:'#059669', borderWidth:1.5, borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>'$'+Math.round(c.parsed.y).toLocaleString()+'/order'}}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'#f1f5f9'}, ticks:{callback:v=>'$'+v}}} }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ATTRIBUTION (initialCreationReason)
+// ══════════════════════════════════════════════════════════════════════════════
+function renderAttr() {
+  const REASONS = Object.keys(D.attr_totals);
+  const LABELS  = D.reason_labels;
+  const DESCS   = {
+    'PURCHASE':               'Payout linked to a Direct Purchase order via initialPurchaseOrderId. The trader passed a challenge they paid for and earned a payout. Most reliable attribution.',
+    'ADMIN':                  'Payout for an account created by admin action, or a paid account whose order ID could not be matched in the orders data. Includes support adjustments.',
+    'MIGRATION':              'Payout for an account migrated from another platform or system. These accounts were created outside the normal challenge purchase flow.',
+    'GIVEAWAY':               'Payout for an account given away for free as a promotion. No purchase was made — account was granted at no cost.',
+    'FREE_PARTNER':           'Payout for an account granted to a partner for free. Partnership arrangements where normal purchase flow does not apply.',
+    'FREE_CHALLENGE_VOUCHER': 'Payout for an account created using a free challenge voucher. The trader redeemed a voucher rather than purchasing directly.'
+  };
+  const COLORS = ['#2563eb','#7c3aed','#059669','#d97706','#0891b2','#dc2626'];
+  const total  = REASONS.reduce((a,r)=>a+D.attr_totals[r].count,0);
+  const totalV = REASONS.reduce((a,r)=>a+D.attr_totals[r].amount_usd,0);
+
+  new Chart(document.getElementById('chAttr').getContext('2d'), {
+    type:'doughnut',
+    data:{ labels:REASONS.map(r=>LABELS[r]||r), datasets:[{ data:REASONS.map(r=>D.attr_totals[r].count), backgroundColor:COLORS, borderWidth:2, borderColor:'#fff' }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'65%',
+      plugins:{ legend:{position:'bottom', labels:{boxWidth:10, padding:7}}, tooltip:{callbacks:{label:c=>c.label+': '+c.parsed.toLocaleString()+' ('+fmtP(c.parsed/total*100)+')'}} }
+    }
+  });
+
+  document.getElementById('attrStats').innerHTML = REASONS.map((r,i) => {
+    const d = D.attr_totals[r];
+    if(!d.count) return '';
+    return '<div style="margin-bottom:10px;padding:10px 12px;background:var(--surf2);border-radius:8px;border-left:4px solid '+COLORS[i]+'">' +
+      '<div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:6px">'+(LABELS[r]||r)+'</div>' +
+      '<div style="display:flex;gap:12px">' +
+        '<div><div style="font-size:17px;font-weight:800;color:'+COLORS[i]+'">'+d.count.toLocaleString()+'</div><div style="font-size:9px;color:var(--txt3);text-transform:uppercase">payouts</div></div>' +
+        '<div><div style="font-size:17px;font-weight:800;color:'+COLORS[i]+'">'+fmtM(d.amount_usd)+'</div><div style="font-size:9px;color:var(--txt3);text-transform:uppercase">value</div></div>' +
+        '<div><div style="font-size:17px;font-weight:800;color:'+COLORS[i]+'">'+fmtP(d.count/total*100)+'</div><div style="font-size:9px;color:var(--txt3);text-transform:uppercase">share</div></div>' +
+      '</div></div>';
+  }).join('');
+
+  document.getElementById('attrTotalV').textContent = fmtF(totalV);
+
+  document.getElementById('attrCards').innerHTML = REASONS.map((r,i) => {
+    const d = D.attr_totals[r];
+    return '<div class="info-item" style="border-left:4px solid '+COLORS[i]+'">' +
+      '<div class="info-item-title" style="color:'+COLORS[i]+'">'+(LABELS[r]||r)+'</div>' +
+      '<div class="info-item-body">'+(DESCS[r]||r)+'<div class="info-example">'+d.count.toLocaleString()+' payouts · '+fmtF(d.amount_usd)+' · '+fmtP(d.count/total*100)+' of total</div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LIVE FX (EUR/USD only)
+// ══════════════════════════════════════════════════════════════════════════════
+async function fetchFX() {
+  try {
+    const r = await fetch('https://api.frankfurter.app/latest?from=EUR&to=USD', {signal:AbortSignal.timeout(6000)});
+    const d = await r.json();
+    LFX.EU = d.rates.USD;
+    LFX.live = true;
+    document.getElementById('fxEU').textContent = LFX.EU.toFixed(4);
+    document.getElementById('fxDot').classList.remove('loading');
+    document.getElementById('fxSrc').textContent = '(live ✓)';
+    document.getElementById('fxNoteText').textContent = 'Live EUR/USD from frankfurter.app: '+LFX.EU.toFixed(4)+'. Revenue uses daily historical rates per transaction date; displayed values are fixed.';
+  } catch(e) {
+    document.getElementById('fxDot').classList.remove('loading');
+    document.getElementById('fxDot').style.background='var(--amber)';
+    document.getElementById('fxSrc').textContent='(fallback)';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  buildCohortSelector();
+  updateKPIs(D.summary, null);
+  initOverview();
+  rendered['overview'] = true;
+  renderProjections(); rendered['projections'] = true;
+  renderCurve();       rendered['curve']       = true;
+  renderAttr();        rendered['attr']        = true;
+  fetchFX();
+});
+</script>
+</body>
+</html>
